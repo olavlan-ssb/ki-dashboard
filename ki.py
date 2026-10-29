@@ -25,7 +25,7 @@ def main() -> None:
     if arguments.dry_run:
         print(context)
     else:
-        subprocess.run(["opencode", "--prompt", context], check=True)
+        subprocess.run(["opencode", "mini", "--prompt", context], check=True)
 
 
 def generate_context(arguments: Arguments) -> str:
@@ -49,6 +49,7 @@ Result of `import marimo._code_mode as cm; help(cm)`:
 
 Use the marimo-pair skill to develop the notebook.
 You do not have to run the setup commands again.
+
 Use the marimo-notebook skill to understand Marimo best practices.
 Note especially that outputs must be assigned to variables and used as the final expression of the cell.
 
@@ -59,7 +60,11 @@ bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "http://localhos
 Before every change, you **must** first explain the change to me.
 Prefer running the command as few times as possible to avoid overwhelming me with requests.
 Avoid extensive testing - I will test the app myself and provide feedback.
+Do **not** run other shell commands.
+
 Before using packages, always read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
+Do not use the **shell** tool for this; use the glob, grep and read tools in the folder.
+
 Use English for code and Norwegian for output in the application.
 Do not write large amounts of logic or data processing. Prefer a thin interactive layer over existing SSB packages.
 Do not write large amounts of raw HTML and CSS. Instead, suggest using the terminal command `ki-layout`.

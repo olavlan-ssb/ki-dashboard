@@ -1,7 +1,6 @@
 # /// script
 # dependencies = [
 #     "marimo",
-#     "polars==1.44.2",
 #     "ssb-parquedit==0.1.2",
 # ]
 # requires-python = ">=3.14"
@@ -14,97 +13,168 @@ app = marimo.App(width="medium")
 
 
 @app.cell
-def _():
+def imports():
     import marimo as mo
-    import polars as pl
     from ssb_parquedit import ParquEdit
 
-    con = ParquEdit.local()
-    refresh, set_refresh = mo.state(0)
-    return con, mo, pl, refresh, set_refresh
+    pe = ParquEdit.local()
+
+    return mo, pe
 
 
-@app.cell
-def table_picker(con, mo, refresh):
-    _ = refresh()
-    tables = con.list_tables()
-    table = mo.ui.dropdown(options=tables, value=tables[0] if tables else None, label="Velg ParquEdit-tabell")
-    mo.vstack([mo.md("# ParquEdit-dashboard\nVelg tabell, rad, rediger verdier og lagre endringen."), table])
-    return table, tables
-
-
-@app.cell
-def data_view(con, mo, refresh, table, tables):
-    _ = refresh()
-    mo.stop(not tables, mo.md("Fant ingen tabeller i ParquEdit.local()."))
-    data = con.view(table_name=table.value, output_format="polars")
-    rows = mo.ui.table(data=data, selection="single", pagination=True, page_size=15, label="Velg rad")
-    rows
-    return data, rows
-
-
-@app.cell
-def row_editor(data, mo, rows):
-    selected = rows.value
-    has_selection = selected is not None and selected.height > 0
-    mo.stop(not has_selection, mo.md("Velg en rad i tabellen over for å redigere den."))
-    row = selected.row(0, named=True)
-    widgets = {c: mo.ui.text(value="" if row[c] is None else str(row[c]), label=f"{c} (nå: {row[c]})", full_width=True) for c in data.columns if c != "rowid"}
-    widgets["reason"] = mo.ui.dropdown(options=["REVIEW", "OTHER_SOURCE", "OWNER", "DUPLICATE", "OTHER"], value="REVIEW", label="Årsak")
-    widgets["comment"] = mo.ui.text_area(label="Kommentar", full_width=True)
-    form = mo.md("### Rediger valgt rad\n" + "\n".join(f"**{c}** {{{c}}}" for c in data.columns if c != "rowid") + "\n\nÅrsak: {reason}\n\nKommentar: {comment}").batch(**widgets).form(submit_button_label="Lagre med ParquEdit")
-    form
-
-    return form, row
-
-
-@app.cell
-def save_changes(con, data, form, mo, refresh, row, set_refresh, table):
-    if form.value is not None and row is not None:
-        values = form.value
-        changes = {c: values[c] for c in data.columns if c != "rowid" and str(values[c]) != str(row[c])}
-        if changes:
-            con.edit(table_name=table.value, rowid=row["rowid"], changes=changes, change_event_reason=values["reason"], change_comment=values["comment"])
-            set_refresh(refresh() + 1)
-            mo.status.toast("Endringen ble lagret med ParquEdit.")
+@app.cell(hide_code=True)
+def title(mo):
+    title = mo.md("# ParquEdit: rediger en rad")
+    title
     return
 
 
 @app.cell(hide_code=True)
-def endringshistorikk(con, mo, pl, refresh, table, tables):
-    _ = refresh()
-    edit_history = con.get_edits(table.value) if tables else None
-
-    def _format_history_value(value):
-        if value is None:
-            return ""
-        return str(value).replace("{'", "").replace("'}", "").replace("'", "")
-
-    history_rows = [] if edit_history is None else [
-        {
-            "Tidspunkt": str(record["snapshot_time"])[:19],
-            "Rad": record["rowid"],
-            "Endring": record["change_type"],
-            "Felt": ", ".join(record["new_values"].keys()) if isinstance(record["new_values"], dict) else "",
-            "Fra": _format_history_value(record["old_values"]),
-            "Til": _format_history_value(record["new_values"]),
-            "Årsak": record["change_event_reason"] or "",
-            "Utført av": record["changed_by"] or record["author"] or "",
-            "Kommentar": record["change_comment"] or "",
-        }
-        for record in edit_history.sort_values("snapshot_time", ascending=False).to_dict("records")
-    ]
-    history_view = pl.DataFrame(history_rows)
-    history_table = mo.ui.table(
-        data=history_view,
-        pagination=True,
-        page_size=10,
-        label="Endringshistorikk",
+def table_selector(mo, pe):
+    tables = pe.list_tables()
+    table_selector = mo.ui.dropdown(
+        options=tables,
+        value=tables[0] if tables else None,
+        label="Velg tabell",
     )
-    mo.vstack([
-        mo.md("## Endringshistorikk\n\nNyeste endringer vises øverst."),
-        history_table,
+    table_selector
+    return (table_selector,)
+
+
+@app.cell(hide_code=True)
+def rows(mo, pe, table_selector):
+    selected_table = table_selector.value
+    rows = pe.view(selected_table, limit=100) if selected_table else []
+    mo.md("")
+    return rows, selected_table
+
+
+@app.cell(hide_code=True)
+def row_table(mo, rows):
+    row_table = mo.ui.table(
+        rows,
+        selection="single",
+        pagination=True,
+        page_size=25,
+        label="Marker raden du vil redigere",
+    )
+    row_table
+
+    return (row_table,)
+
+
+@app.cell(hide_code=True)
+def selected_row(mo, row_table, set_saved):
+    selected_rows = row_table.value
+    if selected_rows is None or len(selected_rows) == 0:
+        selected_row = None
+    else:
+        selected_row = selected_rows.iloc[0].to_dict()
+        set_saved(False)
+    mo.md("")
+
+    return (selected_row,)
+
+
+@app.cell(hide_code=True)
+def save_state(mo):
+    saved, set_saved = mo.state(False)
+    mo.md("")
+    return saved, set_saved
+
+
+@app.cell(hide_code=True)
+def edit_form(mo, saved, selected_row):
+    editable_columns = [
+        column for column in (selected_row or {}).keys()
+        if column not in {"rowid", "_rowid"}
+    ]
+    row_fields = {
+        column: mo.ui.text(
+            value="" if selected_row[column] is None else str(selected_row[column]),
+            label=column,
+        )
+        for column in editable_columns
+    }
+    change_reason = mo.ui.dropdown(
+        options=["OTHER_SOURCE", "REVIEW", "OWNER", "MARGINAL_UNIT", "DUPLICATE", "OTHER"],
+        label="Endringsårsak (påkrevd)",
+    )
+    comment = mo.ui.text_area(
+        label="Kommentar (påkrevd)",
+        placeholder="Beskriv hvorfor raden endres",
+    )
+    save_button = mo.ui.run_button(label="Lagre endring")
+    form = mo.vstack([
+        mo.md("### Endre valgt rad"),
+        *row_fields.values(),
+        change_reason,
+        comment,
+        save_button,
     ])
+    if selected_row is None:
+        display = mo.md("Velg en rad for å vise endringsskjemaet.")
+    elif saved():
+        display = mo.md("✅ Endringen er lagret. Velg en ny rad for å redigere.")
+    else:
+        display = form
+    display
+
+    return change_reason, comment, editable_columns, row_fields, save_button
+
+
+@app.cell(hide_code=True)
+def save_change(
+    change_reason,
+    comment,
+    editable_columns,
+    mo,
+    pe,
+    row_fields,
+    save_button,
+    selected_row,
+    selected_table,
+    set_saved,
+):
+    if save_button.value:
+        if selected_row is None:
+            message = mo.md("⚠️ Marker en rad før du lagrer.")
+        elif not comment.value.strip():
+            message = mo.md("⚠️ Skriv en kommentar før du lagrer.")
+        else:
+            changes = {}
+            for column in editable_columns:
+                raw_value = row_fields[column].value
+                original_value = selected_row[column]
+                if raw_value == "" and original_value is None:
+                    new_value = None
+                elif isinstance(original_value, bool):
+                    new_value = raw_value.strip().lower() in {"true", "1", "ja"}
+                elif isinstance(original_value, int) and not isinstance(original_value, bool):
+                    new_value = int(raw_value)
+                elif isinstance(original_value, float):
+                    new_value = float(raw_value)
+                else:
+                    new_value = raw_value
+                if new_value != original_value:
+                    changes[column] = new_value
+
+            if changes:
+                rowid_key = "rowid" if "rowid" in selected_row else "_rowid"
+                pe.edit(
+                    selected_table,
+                    int(selected_row[rowid_key]),
+                    changes,
+                    change_event_reason=change_reason.value,
+                    change_comment=comment.value.strip(),
+                )
+                set_saved(True)
+                message = mo.md("✅ Endringen er lagret.")
+            else:
+                message = mo.md("ℹ️ Ingen felt er endret.")
+    else:
+        message = mo.md("Velg en rad for å vise endringsskjemaet.")
+    message
 
     return
 

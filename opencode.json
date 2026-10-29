@@ -2,6 +2,18 @@
 {
   "$schema": "https://opencode.ai/config.json",
   "update": "disable",
+  "model": "opencode-go/gemini-4-argon",
+  "provider": {
+    "opencode-go": {
+      "models": {
+        "gemini-4-argon": {
+          "settings": {
+            "reasoningEffort": "low"
+          }
+        }
+      }
+    }
+  },
   "permissions": [
     {
       "action": "external_directory",
