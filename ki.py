@@ -59,16 +59,18 @@ bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "http://localhos
 Before every change, you **must** first explain the change to me.
 Prefer running the command as few times as possible to avoid overwhelming me with requests.
 Avoid extensive testing - I will test the app myself and provide feedback.
-Before using packages, read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
-To clarify requirements, use the question tool to give me concrete alternatives based on my main prompt.
-
+Before using packages, always read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
 Use English for code and Norwegian for output in the application.
 Do not write large amounts of logic or data processing. Prefer a thin interactive layer over existing SSB packages.
-Do not write large amounts of raw HTML and CSS. Instead, suggest using the command `ki-layout`.
+Do not write large amounts of raw HTML and CSS. Instead, suggest using the terminal command `ki-layout`.
+
+Start by reading the relevant package documentation directly from the source, including the Marimo UI component APIs. 
+Then use the question tool to clarify the requirements -  give me concrete alternatives based on the main prompt and available package API.
 
 Main prompt (respond in the same language):
 
 *{arguments.prompt}*
+
     '''
 
 
