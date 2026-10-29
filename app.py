@@ -194,7 +194,7 @@ def save_change(
 
 
 @app.cell
-def _(message, mo, pe, saved, selected_table):
+def change_history(message, mo, pe, saved, selected_table):
     history_columns = [
         "snapshot_time",
         "change_type",
