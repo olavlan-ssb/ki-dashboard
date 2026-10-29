@@ -109,12 +109,15 @@ async def _get_view(app_file: Path) -> Path:
         make_default=True,
     )
 
+    # inject ssb styling in the new document
     document = await view.read("index.html")
     if "</head>" in document.content:
-        content = document.content.replace("</head>", f"{get_ssb_style_block()}\n</head>", 1)
-    else:
-        content = f"<head>\n{get_ssb_style_block()}\n</head>\n{document.content}"
-    await view.write("index.html", content, expected_revision=document.revision)
+        content = document.content.replace(
+            "</head>",
+            f"{get_ssb_style_block()}\n</head>",
+            1,
+        )
+        await view.write("index.html", content, expected_revision=document.revision)
 
     return Path((await view.inspect()).root)
 
