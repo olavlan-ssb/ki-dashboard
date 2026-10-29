@@ -6,11 +6,6 @@
 # ]
 # requires-python = ">=3.14,<3.15"
 #
-# [tool.marimo-studio]
-# default = "ssb"
-#
-# [tool.marimo-studio.cells]
-# cell-10 = {ref = "cell:v1:8cbac2dadb56983ed94c6820c65de669b84878e0b82d54b0f0a9b1aaf47f1f4d:8cbac2dadb56983ed94c6820c65de669b84878e0b82d54b0f0a9b1aaf47f1f4d:0"}
 # ///
 
 import marimo
