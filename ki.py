@@ -11,7 +11,8 @@ import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
-MARIMO_SERVER_PORT = 2718
+IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
+MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 
 @dataclass
 class Arguments:
@@ -57,7 +58,7 @@ Note especially that outputs must be assigned to variables and used as the final
 
 The notebook changes **must** be made through this shell command (see usage in marimo-pair skill):
 
-bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "http://localhost:{MARIMO_SERVER_PORT}" --file "{app_file}"
+bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "{MARIMO_ADRESS}" --file "{app_file}"
 
 Before every change, you **must** first explain the change to me.
 Prefer running the command as few times as possible to avoid overwhelming me with requests.
@@ -115,7 +116,7 @@ def execute_python_in_notebook_session(app_file: Path, code: str) -> str:
         "bash",
         os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
         "--url",
-        f"http://localhost:{MARIMO_SERVER_PORT}",
+        MARIMO_ADRESS,
         "--file",
         str(app_file),
         "-c",
