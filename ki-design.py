@@ -113,7 +113,6 @@ async def _get_view(app_file: Path) -> Path:
         view = workspace.view(overview.default_view)
         inspection = await view.inspect()
         if inspection.provider == "marimo-studio/vanilla":
-            print(f"Fant eksisterende view '{overview.default_view}'")
             return Path(inspection.root)
 
     # if not, create a new html view "ssb.html" and make it default 
