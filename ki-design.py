@@ -144,7 +144,7 @@ async def _get_view(app_file: Path) -> Path:
 
 def get_ssb_style_block() -> str:
     return """\
-TODO add comment here saying clearly to not remove this style block
+<!-- Do not remove this style block. -->
 <style>
 @import url("https://cdn.jsdelivr.net/npm/@digdir/designsystemet-css@1.23.0/dist/src/index.css");
 @import url("https://cdn.jsdelivr.net/npm/@statisticsnorway/design-css@0.2.4/dist/src/fonts/fonts.css");
