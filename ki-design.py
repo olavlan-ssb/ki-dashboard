@@ -66,7 +66,8 @@ This sets the styling for the Marimo UI components.
 There is no proper way to further adjust the styling of the Marimo UI components. 
 Focus on the overall styling of the page and laying out the cells.
 
-You should **always** try to use designsystemet layout components and design tokens.
+You should **always** try to use designsystemet layout components.
+**Avoid** using hardcoded style values - use designsystemet design tokens instead.
 Start your process by reading relevant documentation here: https://github.com/digdir/designsystemet/tree/main/apps/www/app/content. 
 Then use the question tool to clarify my requirements based on your findings.
 
