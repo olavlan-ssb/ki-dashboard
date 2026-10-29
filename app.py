@@ -10,7 +10,7 @@
 # default = "ssb"
 #
 # [tool.marimo-studio.cells]
-# cell-10 = {ref = "cell:v1:a61d6c06cbcb2d8538d6c5708f4ac9866ab46428c50f3ba60667ae017c9b9046:a61d6c06cbcb2d8538d6c5708f4ac9866ab46428c50f3ba60667ae017c9b9046:0"}
+# cell-10 = {ref = "cell:v1:8cbac2dadb56983ed94c6820c65de669b84878e0b82d54b0f0a9b1aaf47f1f4d:8cbac2dadb56983ed94c6820c65de669b84878e0b82d54b0f0a9b1aaf47f1f4d:0"}
 # ///
 
 import marimo
@@ -213,19 +213,53 @@ def _(message, mo, pe, saved, selected_table):
     ]
     _ = saved(), message
     edits = pe.get_edits(selected_table) if selected_table else None
+
+
+    def format_diff_value(value):
+        if value is None:
+            return "∅"
+        if isinstance(value, bool):
+            return "Ja" if value else "Nei"
+        if isinstance(value, str):
+            return value if value else "(tom tekst)"
+        return str(value)
+
+
+    def format_diff(row):
+        old_values = row.get("old_values") or {}
+        new_values = row.get("new_values") or {}
+        changed_columns = list(dict.fromkeys([*old_values, *new_values]))
+        return "\n".join(
+            f"{column}: {format_diff_value(old_values.get(column))} → "
+            f"{format_diff_value(new_values.get(column))}"
+            for column in changed_columns
+            if old_values.get(column) != new_values.get(column)
+        ) or "Ingen feltforskjell"
+
     if edits is None or edits.empty:
         history_content = mo.md("Ingen endringer er registrert for denne tabellen ennå.")
     else:
-        available_columns = [col for col in history_columns if col in edits.columns]
+        history_display = edits.copy()
+        history_display["diff"] = history_display.apply(format_diff, axis=1)
+        display_columns = [
+            column
+            for column in history_columns
+            if column in edits.columns and column not in {"old_values", "new_values"}
+        ]
+        comment_position = display_columns.index("change_comment") + 1
+        display_columns.insert(comment_position, "diff")
         history_content = mo.ui.table(
-            edits[available_columns],
+            history_display[display_columns],
             selection=None,
             pagination=True,
             page_size=10,
+            show_column_summaries=False,
+            wrapped_columns=["diff", "change_comment"],
+            column_widths={"diff": 420, "change_comment": 280},
             label="Registrerte endringer",
         )
     history_section = mo.vstack([
-        mo.md("### Endringshistorikk"),
+        mo.md("Endringshistorikk"),
         history_content,
     ])
     history_section
