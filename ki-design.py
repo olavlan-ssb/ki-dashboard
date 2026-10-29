@@ -1,8 +1,12 @@
 # /// script
 # requires-python = ">=3.12"
+# dependencies = [
+#     "marimo-studio==0.4.0",
+# ]
 # ///
 
 import argparse
+import asyncio
 import os
 import subprocess
 import sys
@@ -25,50 +29,32 @@ def main() -> None:
     if arguments.dry_run:
         print(context)
     else:
-        subprocess.run(["opencode", "--prompt", context], check=True)
+        subprocess.run(["opencode", "mini", "--prompt", context], check=True)
 
 
 def generate_context(arguments: Arguments) -> str:
     app_file = arguments.app_file.resolve()
+    view = get_view(app_file)
     return f'''\
 # Context
 
-I want help developing a reactive Marimo application in {app_file}.
+I want help developing a Marimo studio view on top of my Marimo application {app_file}.
+The view is a plain html file in {view}.
 
-## The Marimo Python API for editing a Marimo notebook
+## The current Marimo notebook content
 
-Result of `import marimo._code_mode as cm; help(cm)`:
+{app_file.read_text(encoding="utf-8")}
 
-{get_marimo_python_api_docs(app_file)}
+## The current view content
 
-## The current content of Marimo notebook
-
-{get_notebook_content(app_file)}
+{view.joinpath("index.html").read_text(encoding="utf-8")}
 
 ## Instructions and prompt
-
-Use the marimo-pair skill to develop the notebook.
-You do not have to run the setup commands again.
-Use the marimo-notebook skill to understand Marimo best practices.
-Note especially that outputs must be assigned to variables and used as the final expression of the cell.
-
-The notebook changes **must** be made through this shell command (see usage in marimo-pair skill):
-
-bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "http://localhost:{MARIMO_SERVER_PORT}" --file "{app_file}"
-
-Before every change, you **must** first explain the change to me.
-Prefer running the command as few times as possible to avoid overwhelming me with requests.
-Avoid extensive testing - I will test the app myself and provide feedback.
-Before using packages, read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
-To clarify requirements, use the question tool to give me concrete alternatives based on my main prompt.
-
-Use English for code and Norwegian for output in the application.
-Do not write large amounts of logic or data processing. Prefer a thin interactive layer over existing SSB packages.
-Do not write large amounts of raw HTML and CSS. Instead, suggest using the command `ki-layout`.
 
 Main prompt (respond in the same language):
 
 *{arguments.prompt}*
+
     '''
 
 
@@ -84,7 +70,7 @@ def parse_args() -> Arguments:
     if not args.app_file.is_file():
         parser.error(f"Marimo-filen finnes ikke: {args.app_file}")
     if args.prompt is None:
-        parser.error("det andre argumentet må være en kort beskrivelse av ønsket endring i filen")
+        parser.error("det andre argumentet må være en kort beskrivelse av ønsket layout")
     return Arguments(
         dry_run=args.dry_run,
         app_file=args.app_file,
@@ -92,26 +78,40 @@ def parse_args() -> Arguments:
     )
 
 
+def get_view(app_file: Path) -> Path:
+    return asyncio.run(_get_view(app_file))
+
+
+async def _get_view(app_file: Path) -> Path:
+    from marimo_studio.authoring import open_workspace
+
+    workspace = open_workspace(app_file)
+    overview = await workspace.status()
+    
+    if overview.default_view is not None:
+        view = workspace.view(overview.default_view)
+        inspection = await view.inspect()
+        if inspection.provider == "marimo-studio/vanilla":
+            return Path(inspection.root)
+
+    name = "ssb"
+    names = set(overview.views)
+    suffix = 2
+    while name in names:
+        name = f"ssb-{suffix}"
+        suffix += 1
+
+    view = await workspace.create_view(
+        name,
+        starter="marimo-studio/vanilla:default",
+        make_default=True,
+    )
+    return Path((await view.inspect()).root)
+
 def exit_because_notebook_session_is_not_active(app_file: Path) -> None:
     print(f"Filen '{app_file}' må være åpnet i Marimo-grensesnittet", file=sys.stderr)
     raise SystemExit(1)
 
-
-def execute_python_in_notebook_session(app_file: Path, code: str) -> str:
-    command = [
-        "bash",
-        os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
-        "--url",
-        f"http://localhost:{MARIMO_SERVER_PORT}",
-        "--file",
-        str(app_file),
-        "-c",
-        code,
-    ]
-    result = subprocess.run(command, capture_output=True, text=True )
-    if result.returncode != 0:
-        exit_because_notebook_session_is_not_active(app_file)
-    return result.stdout
 
 
 def get_notebook_environment(app_file: Path) -> str:
@@ -123,28 +123,6 @@ def get_notebook_environment(app_file: Path) -> str:
     if result.returncode != 0:
         exit_because_notebook_session_is_not_active(app_file)
     return result.stdout.strip()
-
-
-def get_marimo_python_api_docs(app_file: Path) -> str:
-    return execute_python_in_notebook_session(app_file, "import marimo._code_mode as cm; help(cm)")
-
-
-def get_notebook_content(app_file: Path) -> str:
-    return execute_python_in_notebook_session(
-        app_file,
-        textwrap.dedent(
-            """\
-            import marimo._code_mode as cm
-
-            async with cm.get_context() as ctx:
-                for cell_id, cell in ctx.cells.items():
-                    print(f"### Cell {cell_id}")
-                    print("```python")
-                    print(cell.code)
-                    print("```")
-            """
-        ),
-    )
 
 
 if __name__ == "__main__":

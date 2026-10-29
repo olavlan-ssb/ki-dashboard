@@ -18,7 +18,6 @@ def imports():
     from ssb_parquedit import ParquEdit
 
     pe = ParquEdit.local()
-
     return mo, pe
 
 
@@ -59,7 +58,6 @@ def row_table(mo, rows):
         label="Marker raden du vil redigere",
     )
     row_table
-
     return (row_table,)
 
 
@@ -72,7 +70,6 @@ def selected_row(mo, row_table, set_saved):
         selected_row = selected_rows.iloc[0].to_dict()
         set_saved(False)
     mo.md("")
-
     return (selected_row,)
 
 
@@ -119,7 +116,6 @@ def edit_form(mo, saved, selected_row):
     else:
         display = form
     display
-
     return change_reason, comment, editable_columns, row_fields, save_button
 
 
@@ -175,7 +171,40 @@ def save_change(
     else:
         message = mo.md("Velg en rad for å vise endringsskjemaet.")
     message
+    return (message,)
 
+
+@app.cell
+def _(message, mo, pe, saved, selected_table):
+    history_columns = [
+        "snapshot_time",
+        "change_type",
+        "changed_by",
+        "rowid",
+        "user_defined_id",
+        "change_event_reason",
+        "change_comment",
+        "old_values",
+        "new_values",
+    ]
+    _ = saved(), message
+    edits = pe.get_edits(selected_table) if selected_table else None
+    if edits is None or edits.empty:
+        history_content = mo.md("Ingen endringer er registrert for denne tabellen ennå.")
+    else:
+        available_columns = [col for col in history_columns if col in edits.columns]
+        history_content = mo.ui.table(
+            edits[available_columns],
+            selection=None,
+            pagination=True,
+            page_size=10,
+            label="Registrerte endringer",
+        )
+    history_section = mo.vstack([
+        mo.md("### Endringshistorikk"),
+        history_content,
+    ])
+    history_section
     return
 
 
