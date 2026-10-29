@@ -29,13 +29,6 @@ def imports():
 
 
 @app.cell(hide_code=True)
-def title(mo):
-    title = mo.md("# ParquEdit: rediger en rad")
-    title
-    return
-
-
-@app.cell(hide_code=True)
 def table_selector(mo, pe):
     tables = pe.list_tables()
     table_selector = mo.ui.dropdown(

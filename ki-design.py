@@ -64,6 +64,8 @@ Focus on the overall styling of the page and laying out the cells.
 
 You should **always** try to use designsystemet layout components.
 **Avoid** using hardcoded style values - use designsystemet design tokens instead.
+In particular, you do **not** need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
+
 Start your process by reading relevant documentation here: https://github.com/digdir/designsystemet/tree/main/apps/www/app/content. 
 Then use the question tool to clarify my requirements based on your findings.
 
@@ -142,6 +144,7 @@ async def _get_view(app_file: Path) -> Path:
 
 def get_ssb_style_block() -> str:
     return """\
+TODO add comment here saying clearly to not remove this style block
 <style>
 @import url("https://cdn.jsdelivr.net/npm/@digdir/designsystemet-css@1.23.0/dist/src/index.css");
 @import url("https://cdn.jsdelivr.net/npm/@statisticsnorway/design-css@0.2.4/dist/src/fonts/fonts.css");
