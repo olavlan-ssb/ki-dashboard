@@ -50,10 +50,6 @@ The view is a plain html file: {html_file}.
 
 {html_file.read_text(encoding="utf-8")}
 
-## How Marimo Studio views work  
-
-TODO insert marimo studio agent skill documentation here
-
 ## Instructions and prompt
 
 You should **not** edit the Marimo notebook.
