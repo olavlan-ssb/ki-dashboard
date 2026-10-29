@@ -42,10 +42,19 @@ def table_selector(mo, pe):
 
 @app.cell(hide_code=True)
 def rows(mo, pe, table_selector):
+    from ssb_parquedit.query import QueryOperations
+
     selected_table = table_selector.value
     rows = pe.view(selected_table, limit=100) if selected_table else []
-    mo.md("")
-    return rows, selected_table
+    tag_info = (
+        QueryOperations(pe._get_connection())._get_tag_info(selected_table)
+        if selected_table
+        else None
+    )
+    user_defined_id_cols = (tag_info or {}).get("user_defined_id") or []
+    empty_rows_output = mo.md("")
+    empty_rows_output
+    return rows, selected_table, user_defined_id_cols
 
 
 @app.cell(hide_code=True)
@@ -81,7 +90,7 @@ def save_state(mo):
 
 
 @app.cell(hide_code=True)
-def edit_form(mo, saved, selected_row):
+def edit_form(mo, saved, selected_row, user_defined_id_cols):
     editable_columns = [
         column for column in (selected_row or {}).keys()
         if column not in {"rowid", "_rowid"}
@@ -102,8 +111,23 @@ def edit_form(mo, saved, selected_row):
         placeholder="Beskriv hvorfor raden endres",
     )
     save_button = mo.ui.run_button(label="Lagre endring")
+
+    if selected_row is not None:
+        form_rowid_key = "rowid" if "rowid" in selected_row else "_rowid"
+        rowid_val = selected_row.get(form_rowid_key)
+        uid_str = ", ".join(
+            f"{col}={selected_row.get(col)}"
+            for col in user_defined_id_cols
+            if col in selected_row
+        )
+        subtitle = f"**Rad-ID (rowid):** `{rowid_val}`" + (
+            f" | **Brukerdefinert ID:** `{uid_str}`" if uid_str else ""
+        )
+    else:
+        subtitle = ""
+
     form = mo.vstack([
-        mo.md("### Endre valgt rad"),
+        mo.md(f"### Endre valgt rad\n{subtitle}"),
         *row_fields.values(),
         change_reason,
         comment,
