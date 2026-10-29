@@ -1,5 +1,8 @@
 # /// script
 # requires-python = ">=3.12"
+# dependencies = [
+#     "opencode-ai>=0.1.0a36",
+# ]
 # ///
 
 import argparse
