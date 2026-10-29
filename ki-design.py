@@ -54,10 +54,15 @@ The view is a plain html file: {html_file}.
 
 ## Instructions and prompt
 
-You should **not** edit the Marimo notebook.
 Your job is to develop the layout on top of the notebook according to my prompt. 
 Your should **only** to make edits to {html_file}.
+You should generally **not** edit the Marimo notebook.
 Refer the user to the `ki` terminal command for notebook changes.
+
+You should read the Marimo notebook to ensure that the cells are inserted correctly in the html.
+Marimo notebook cells without a name (functions named `_`) should be given a meaningful name,
+so that they can easily be inserted in the html file.
+This is the only kind of notebook change you should make.
 
 You must **never** remove the style block that has the designsystemet imports.
 This sets the styling for the Marimo UI components.

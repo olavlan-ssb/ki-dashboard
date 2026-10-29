@@ -50,6 +50,7 @@ Result of `import marimo._code_mode as cm; help(cm)`:
 
 Use the marimo-pair skill to develop the notebook.
 You do not have to run the setup commands again.
+Every cell **must** be given a meaningful name.
 
 Use the marimo-notebook skill to understand Marimo best practices.
 Note especially that outputs must be assigned to variables and used as the final expression of the cell.
@@ -72,10 +73,10 @@ The notebook should only have the plain interactive components.
 It should **not** have html and css.
 It should **not** have a headline.
 Prefer **not** combining into stacks - rather have one small output for each cell. 
-Inform user that all app design (layout and styling) should be done through the `ki-layout` terminal command.
+Inform user that all app design (layout and styling) should be done through the `ki-design` terminal command.
 
 Start by reading the relevant package documentation directly from the source, including the Marimo UI component APIs. 
-Then use the question tool to clarify the requirements -  give me concrete alternatives based on the main prompt and available package API.
+Then use the question tool to clarify the requirements based on your findings.
 
 Main prompt (respond in the same language):
 
