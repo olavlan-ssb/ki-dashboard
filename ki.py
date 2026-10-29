@@ -27,7 +27,7 @@ def main() -> None:
     if arguments.dry_run:
         print(context)
     else:
-        subprocess.run(["opencode", "mini", "--prompt", context], check=True)
+        subprocess.run(["opencode", "--prompt", context], check=True)
 
 
 def generate_context(arguments: Arguments) -> str:

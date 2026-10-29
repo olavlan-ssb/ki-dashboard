@@ -29,7 +29,7 @@ def main() -> None:
         return
 
     subprocess.run(
-        ["opencode", "mini", "--prompt", context],
+        ["opencode", "--prompt", context],
         check=True,
     )
 
