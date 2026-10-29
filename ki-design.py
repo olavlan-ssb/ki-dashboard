@@ -2,16 +2,13 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo-studio==0.4.0",
-#     "opencode-ai>=0.1.0a36",
 # ]
 # ///
 
 import argparse
 import asyncio
-import os
 import subprocess
 import sys
-import textwrap
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -29,14 +26,12 @@ def main() -> None:
 
     if arguments.dry_run:
         print(context)
-        # todo exit here so next code is not indented
-    else:
-        # todo use the opencode python sdk to first create a session
-        # then add specific opencode config to the session
-        # for now, just set write, edit and apply_patch to deny
-        # finally run opencode with the created session
-        ""
-        subprocess.run(["opencode", "mini", "--prompt", context], check=True)
+        return
+
+    subprocess.run(
+        ["opencode", "mini", "--prompt", context],
+        check=True,
+    )
 
 
 def generate_context(arguments: Arguments) -> str:
