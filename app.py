@@ -2,8 +2,15 @@
 # dependencies = [
 #     "marimo",
 #     "ssb-parquedit==0.1.2",
+#     "marimo-studio==0.4.0"
 # ]
-# requires-python = ">=3.14"
+# requires-python = ">=3.14,<3.15"
+#
+# [tool.marimo-studio]
+# default = "ssb"
+#
+# [tool.marimo-studio.cells]
+# cell-10 = {ref = "cell:v1:a61d6c06cbcb2d8538d6c5708f4ac9866ab46428c50f3ba60667ae017c9b9046:a61d6c06cbcb2d8538d6c5708f4ac9866ab46428c50f3ba60667ae017c9b9046:0"}
 # ///
 
 import marimo

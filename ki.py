@@ -65,9 +65,13 @@ Do **not** run other shell commands.
 Before using packages, always read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
 Do not use the **shell** tool for this; use the glob, grep and read tools in the folder.
 
-Use English for code and Norwegian for output in the application.
-Do not write large amounts of logic or data processing. Prefer a thin interactive layer over existing SSB packages.
-Do not write large amounts of raw HTML and CSS. Instead, suggest using the terminal command `ki-layout`.
+Use English for code and Norwegian for output.
+Do not write large amounts of logic or data processing - prefer a thin interactive layer over existing SSB packages.
+The notebook should only have the plain interactive components.
+It should **not** have html and css.
+It should **not** have a headline.
+Prefer **not** combining into stacks - rather have one small output for each cell. 
+Inform user that all app design (layout and styling) should be done through the `ki-layout` terminal command.
 
 Start by reading the relevant package documentation directly from the source, including the Marimo UI component APIs. 
 Then use the question tool to clarify the requirements -  give me concrete alternatives based on the main prompt and available package API.
