@@ -87,13 +87,15 @@ async def _get_view(app_file: Path) -> Path:
 
     workspace = open_workspace(app_file)
     overview = await workspace.status()
-    
+   
+    # if the notebook has a connected html view, use that
     if overview.default_view is not None:
         view = workspace.view(overview.default_view)
         inspection = await view.inspect()
         if inspection.provider == "marimo-studio/vanilla":
             return Path(inspection.root)
 
+    # if not, create a new html view "ssb.html" and make it default 
     name = "ssb"
     names = set(overview.views)
     suffix = 2
@@ -106,7 +108,38 @@ async def _get_view(app_file: Path) -> Path:
         starter="marimo-studio/vanilla:default",
         make_default=True,
     )
+
+    document = await view.read("index.html")
+    if "</head>" in document.content:
+        content = document.content.replace("</head>", f"{get_ssb_style_block()}\n</head>", 1)
+    else:
+        content = f"<head>\n{get_ssb_style_block()}\n</head>\n{document.content}"
+    await view.write("index.html", content, expected_revision=document.revision)
+
     return Path((await view.inspect()).root)
+
+
+def get_ssb_style_block() -> str:
+    return """\
+<style>
+@import url("https://cdn.jsdelivr.net/npm/@digdir/designsystemet-css@1.23.0/dist/src/index.css");
+@import url("https://cdn.jsdelivr.net/npm/@statisticsnorway/design-css@0.2.4/dist/src/fonts/fonts.css");
+@import url("https://cdn.jsdelivr.net/npm/@statisticsnorway/design-css@0.2.4/dist/theme/ssb.css");
+
+:root {
+  --marimo-cell-font: var(--ds-font-family);
+  --marimo-cell-heading-font: var(--ds-font-family);
+  --marimo-cell-background: var(--ds-color-background-default);
+  --marimo-cell-foreground: var(--ds-color-text-default);
+  --marimo-cell-surface: var(--ds-color-surface-default);
+  --marimo-cell-border-color: var(--ds-color-border-subtle);
+  --marimo-cell-accent: var(--ds-color-base-default);
+  --marimo-cell-error: var(--ds-color-base-default);
+  --marimo-cell-radius: var(--ds-border-radius-default);
+  --marimo-cell-padding: var(--ds-size-4);
+}
+</style>"""
+
 
 def exit_because_notebook_session_is_not_active(app_file: Path) -> None:
     print(f"Filen '{app_file}' må være åpnet i Marimo-grensesnittet", file=sys.stderr)
