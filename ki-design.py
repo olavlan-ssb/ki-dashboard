@@ -35,11 +35,12 @@ def main() -> None:
 def generate_context(arguments: Arguments) -> str:
     app_file = arguments.app_file.resolve()
     view = get_view(app_file)
+    html_file = view.joinpath("index.html")
     return f'''\
 # Context
 
-I want help developing a Marimo studio view on top of my Marimo application {app_file}.
-The view is a plain html file in {view}.
+I want help developing a Marimo Studio view on top of my Marimo application {app_file}.
+The view is a plain html file: {html_file}.
 
 ## The current Marimo notebook content
 
@@ -47,9 +48,27 @@ The view is a plain html file in {view}.
 
 ## The current view content
 
-{view.joinpath("index.html").read_text(encoding="utf-8")}
+{html_file.read_text(encoding="utf-8")}
+
+## How Marimo Studio views work  
+
+TODO insert marimo studio agent skill documentation here
 
 ## Instructions and prompt
+
+You should **not** edit the Marimo notebook.
+Your job is to develop the layout on top of the notebook according to my prompt. 
+Your should **only** to make edits to {html_file}.
+Refer the user to the `ki` terminal command for notebook changes.
+
+You must **never** remove the style block that has the designsystemet imports.
+This sets the styling for the Marimo UI components.
+There is no proper way to further adjust the styling of the Marimo UI components. 
+Focus on the overall styling of the page and laying out the cells.
+
+You should **always** try to use designsystemet layout components and design tokens.
+Start your process by reading relevant documentation here: https://github.com/digdir/designsystemet/tree/main/apps/www/app/content. 
+Then use the question tool to clarify my requirements based on your findings.
 
 Main prompt (respond in the same language):
 
