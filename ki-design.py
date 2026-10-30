@@ -150,35 +150,11 @@ async def _get_view(app_file: Path) -> Path:
             1,
         )
         await view.write("index.html", content, expected_revision=document.revision)
-    
-    # build the view and how it in the marimo interface
     await view.build()
-    run_in_marimo_session(
-        app_file,
-        f"from marimo_studio.agent import current_workspace; await current_workspace().view({name!r}).show()",
-    )
     return Path((await view.inspect()).root)
 
 
-def run_in_marimo_session(app_file: Path, code: str) -> str:
-    command = [
-        "bash",
-        os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
-        "--url",
-        MARIMO_ADRESS,
-        "--file",
-        str(app_file),
-        "-c",
-        code,
-    ]
-    result = subprocess.run(command, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(
-            f"Filen '{app_file}' må være åpnet i Marimo-grensesnittet",
-            file=sys.stderr,
-        )
-        raise SystemExit(1)
-    return result.stdout
+
 
 
 def get_ssb_style_block() -> str:
