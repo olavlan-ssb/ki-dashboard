@@ -32,6 +32,9 @@ def main() -> None:
 
 def generate_context(arguments: Arguments) -> str:
     app_file = arguments.app_file.resolve()
+    dapla_manual_docs_path = fetch_github_docs(
+        "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
+    )
     return f'''\
 # Context
 
@@ -70,7 +73,8 @@ Prefer having outputs in separate cells instead of combining them into stacks.
 Every cell **must** be given a meaningful name.
 
 Start by using the skill tool to load marimo-notebook and marimo-pair.
-Then read relevant package documentation directly from the source, including the Marimo UI component APIs. 
+Then read relevant package documentation directly from the source, including the Marimo UI component APIs.
+Read relevant statistikkere documentation from {dapla_manual_docs_path}. 
 Then use the question tool to clarify requirements based on your findings.
 
 Main prompt (respond in the same language):
@@ -142,6 +146,41 @@ def get_notebook_environment(app_file: Path) -> str:
 
 def get_marimo_python_api_docs(app_file: Path) -> str:
     return run_in_marimo_session(app_file, "import marimo._code_mode as cm; help(cm)")
+
+
+def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
+    destination = Path.home() / ".cache" / repo_name
+    if destination.is_dir():
+        return destination
+    print(f"Fetching relevant docs: {repo_name}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    import shutil
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temporary:
+        subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--filter=blob:none",
+                "--sparse",
+                f"https://github.com/{repo_name}.git",
+                temporary,
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        subprocess.run(
+            ["git", "-C", temporary, "sparse-checkout", "set", docs_path],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        shutil.copytree(Path(temporary) / docs_path, destination, dirs_exist_ok=True)
+    return destination
 
 
 if __name__ == "__main__":

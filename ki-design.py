@@ -43,6 +43,9 @@ def generate_context(arguments: Arguments) -> str:
     designsystemet_docs_path = fetch_github_docs(
         "digdir/designsystemet", "apps/www/app/content"
     )
+    dapla_manual_docs_path = fetch_github_docs(
+        "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
+    )
     view = get_view(app_file)
     html_file = view.joinpath("index.html")
     return f"""\
@@ -74,7 +77,8 @@ Always prefer using designsystemet layout components when possible.
 Avoid using hardcoded style values - use designsystemet design tokens instead.
 In particular, you do not need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
 
-Start by reading relevant designsystemet docs from {designsystemet_docs_path}. 
+Start by reading relevant designsystemet docs from {designsystemet_docs_path}.
+Also read the relevant documentation for statistikkere from {dapla_manual_docs_path}.
 Then use the question tool to clarify requirements based on your findings.
 
 Main prompt (respond in the same language):
@@ -178,7 +182,7 @@ def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
     destination = Path.home() / ".cache" / repo_name
     if destination.is_dir():
         return destination
-    print("Fetching relevant docs..")
+    print(f"Fetching relevant docs: {repo_name}")
     destination.parent.mkdir(parents=True, exist_ok=True)
     import shutil
     import tempfile
