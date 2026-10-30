@@ -126,15 +126,9 @@ async def _get_view(app_file: Path) -> Path:
         if inspection.provider == "marimo-studio/vanilla":
             return Path(inspection.root)
 
-    # if not, create a new html view "ssb.html" and make it default
-    name = "ssb"
-    names = set(overview.views)
-    suffix = 2
-    while name in names:
-        name = f"ssb-{suffix}"
-        suffix += 1
-
-    print(f"Oppretter nytt SSB-view '{name}.html'...")
+    # if not, create a new html view "dashboard.html" and make it default
+    name = "dashboard"
+    print(f"Oppretter nytt dashboard-view '{name}.html'...")
     view = await workspace.create_view(
         name,
         starter="marimo-studio/vanilla:default",
