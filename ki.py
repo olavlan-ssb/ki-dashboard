@@ -45,13 +45,12 @@ Result of `import marimo._code_mode as cm; help(cm)`:
 
 ## Instructions and prompt
 
-Use the marimo-pair skill to develop the notebook.
-You do not have to run the setup commands again.
-
-Use the marimo-notebook skill to understand Marimo best practices.
+Use the marimo-notebook skill to understand Marimo concepts.
 Note especially that outputs must be assigned to variables and used as the final expression of the cell.
 
-The notebook changes **must** be made through this shell command (see usage in the marimo-pair skill):
+Use the marimo-pair skill to develop the notebook.
+When adding an editing cells, only insert the content, not marimo cell decorators/functions.
+You do not have to run the setup commands, the notebook is already connected:
 
 bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "{MARIMO_ADRESS}" --file "{app_file}"
 
@@ -69,7 +68,7 @@ Do not write large amounts of html and css, and do not include a headline.
 Prefer having outputs in separate cells instead of combining them into stacks.
 Every cell should be given a meaningful name.
 
-Start by loading the skills marimo-pair and marimo-notebook.
+Start by using the skill tool to load marimo-notebook and marimo-pair.
 Then read relevant package documentation directly from the source, including the Marimo UI component APIs. 
 Then use the question tool to clarify requirements based on your findings.
 
