@@ -105,7 +105,7 @@ def exit_because_notebook_session_is_not_active(app_file: Path) -> None:
     raise SystemExit(1)
 
 
-def execute_python_in_notebook_session(app_file: Path, code: str) -> str:
+def run_in_marimo_session(app_file: Path, code: str) -> str:
     command = [
         "bash",
         os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
@@ -134,7 +134,7 @@ def get_notebook_environment(app_file: Path) -> str:
 
 
 def get_marimo_python_api_docs(app_file: Path) -> str:
-    return execute_python_in_notebook_session(app_file, "import marimo._code_mode as cm; help(cm)")
+    return run_in_marimo_session(app_file, "import marimo._code_mode as cm; help(cm)")
 
 
 if __name__ == "__main__":

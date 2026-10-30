@@ -9,17 +9,20 @@ import argparse
 import asyncio
 import os
 import subprocess
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 
 IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
 MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 
+
 @dataclass
 class Arguments:
     dry_run: bool
     app_file: Path
     prompt: str
+
 
 def main() -> None:
     arguments = parse_args()
@@ -42,7 +45,7 @@ def generate_context(arguments: Arguments) -> str:
     )
     view = get_view(app_file)
     html_file = view.joinpath("index.html")
-    return f'''\
+    return f"""\
 # Context
 
 I want help developing a Marimo Studio view on top of my Marimo application {app_file}.
@@ -78,8 +81,7 @@ Main prompt (respond in the same language):
 
 *{arguments.prompt}*
 
-    '''
-
+    """
 
 
 def parse_args() -> Arguments:
@@ -93,7 +95,9 @@ def parse_args() -> Arguments:
     if not args.app_file.is_file():
         parser.error(f"Marimo-filen finnes ikke: {args.app_file}")
     if args.prompt is None:
-        parser.error("det andre argumentet må være en kort beskrivelse av ønsket layout")
+        parser.error(
+            "det andre argumentet må være en kort beskrivelse av ønsket layout"
+        )
     return Arguments(
         dry_run=args.dry_run,
         app_file=args.app_file,
@@ -110,7 +114,7 @@ async def _get_view(app_file: Path) -> Path:
 
     workspace = open_workspace(app_file)
     overview = await workspace.status()
-   
+
     # if the notebook has a connected html view, use that
     if overview.default_view is not None:
         print("Finner eksisterende view...")
@@ -119,7 +123,7 @@ async def _get_view(app_file: Path) -> Path:
         if inspection.provider == "marimo-studio/vanilla":
             return Path(inspection.root)
 
-    # if not, create a new html view "ssb.html" and make it default 
+    # if not, create a new html view "ssb.html" and make it default
     name = "ssb"
     names = set(overview.views)
     suffix = 2
@@ -143,8 +147,35 @@ async def _get_view(app_file: Path) -> Path:
             1,
         )
         await view.write("index.html", content, expected_revision=document.revision)
-
+    
+    # build the view and how it in the marimo interface
+    await view.build()
+    run_in_marimo_session(
+        app_file,
+        f"from marimo_studio.agent import current_workspace; await current_workspace().view({name!r}).show()",
+    )
     return Path((await view.inspect()).root)
+
+
+def run_in_marimo_session(app_file: Path, code: str) -> str:
+    command = [
+        "bash",
+        os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
+        "--url",
+        MARIMO_ADRESS,
+        "--file",
+        str(app_file),
+        "-c",
+        code,
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(
+            f"Filen '{app_file}' må være åpnet i Marimo-grensesnittet",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+    return result.stdout
 
 
 def get_ssb_style_block() -> str:
@@ -168,6 +199,7 @@ def get_ssb_style_block() -> str:
   --marimo-cell-padding: var(--ds-size-4);
 }
 </style>"""
+
 
 def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
     destination = Path.home() / ".cache" / repo_name
@@ -202,6 +234,7 @@ def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
         )
         shutil.copytree(Path(temporary) / docs_path, destination, dirs_exist_ok=True)
     return destination
+
 
 if __name__ == "__main__":
     main()
