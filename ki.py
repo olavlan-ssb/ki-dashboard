@@ -124,9 +124,18 @@ def run_in_marimo_session(app_file: Path, code: str) -> str:
 
 def get_notebook_environment(app_file: Path) -> str:
     result = subprocess.run(
-        ["uv", "python", "find", "--script", str(app_file)],
+        [
+            "uv",
+            "python",
+            "find",
+            "--no-project",
+            "--no-config",
+            "--script",
+            str(app_file),
+        ],
         capture_output=True,
         text=True,
+        env={**os.environ, "VIRTUAL_ENV": ""},
     )
     if result.returncode != 0:
         exit_because_notebook_session_is_not_active(app_file)
