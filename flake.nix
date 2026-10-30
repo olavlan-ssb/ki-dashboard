@@ -1,25 +1,25 @@
 {
-  description = "OpenCode development environment";
+  description = "Dev env for marimo-dashboard";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+  inputs = {
+    flake-parts.url = "github:hercules-ci/flake-parts";
+    nixpkgs.url = "https://channels.nixos.org/nixpkgs-unstable/nixexprs.tar.zst";
+  };
 
-  outputs =
-    { nixpkgs, ... }:
-    let
-      systems = [
-        "x86_64-linux"
-        "aarch64-linux"
-        "x86_64-darwin"
-        "aarch64-darwin"
-      ];
-      forEachSystem = nixpkgs.lib.genAttrs systems;
-    in
-    {
-      devShells = forEachSystem (system: {
-        default = nixpkgs.legacyPackages.${system}.mkShell {
-          packages = [ nixpkgs.legacyPackages.${system}.opencode ];
+  outputs = inputs @ {flake-parts, ...}:
+    flake-parts.lib.mkFlake {inherit inputs;} {
+      systems = ["x86_64-linux" "aarch64-linux" "aarch64-darwin"];
+      perSystem = {
+        pkgs,
+        ...
+      }: {
+        devShells.default = pkgs.mkShell {
+          name = "marimo-dashboard";
+          packages = [pkgs.opencode];
           TY_UV = "scripts";
         };
-      });
+
+        formatter = pkgs.alejandra;
+      };
     };
 }
