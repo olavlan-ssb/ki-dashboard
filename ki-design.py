@@ -116,8 +116,11 @@ async def _get_view(app_file: Path) -> Path:
     overview = await workspace.status()
 
     # if the notebook has a connected html view, use that
-    if overview.default_view is not None:
-        print("Finner eksisterende view...")
+    print("Finner eksisterende view...")
+    if (
+        overview.default_view is not None
+        and (overview.view_root / overview.default_view).is_dir()
+    ):
         view = workspace.view(overview.default_view)
         inspection = await view.inspect()
         if inspection.provider == "marimo-studio/vanilla":
@@ -131,7 +134,7 @@ async def _get_view(app_file: Path) -> Path:
         name = f"ssb-{suffix}"
         suffix += 1
 
-    print(f"Oppretter nytt SSB-view '{name}.html'")
+    print(f"Oppretter nytt SSB-view '{name}.html'...")
     view = await workspace.create_view(
         name,
         starter="marimo-studio/vanilla:default",
