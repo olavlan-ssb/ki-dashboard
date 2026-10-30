@@ -8,11 +8,11 @@
 import argparse
 import asyncio
 import subprocess
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-MARIMO_SERVER_PORT = 2718
+IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
+MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 
 @dataclass
 class Arguments:
@@ -171,22 +171,6 @@ def get_ssb_style_block() -> str:
 }
 </style>"""
 
-
-def exit_because_notebook_session_is_not_active(app_file: Path) -> None:
-    print(f"Filen '{app_file}' må være åpnet i Marimo-grensesnittet", file=sys.stderr)
-    raise SystemExit(1)
-
-
-
-def get_notebook_environment(app_file: Path) -> str:
-    result = subprocess.run(
-        ["uv", "python", "find", "--script", str(app_file)],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        exit_because_notebook_session_is_not_active(app_file)
-    return result.stdout.strip()
 
 
 if __name__ == "__main__":
