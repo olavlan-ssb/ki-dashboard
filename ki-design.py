@@ -37,7 +37,7 @@ def main() -> None:
 
 def generate_context(arguments: Arguments) -> str:
     app_file = arguments.app_file.resolve()
-    designsystemet_path = get_designsystemet_docs()
+    designsystemet_docs_path = get_designsystemet_docs()
     view = get_view(app_file)
     html_file = view.joinpath("index.html")
     return f'''\
@@ -62,9 +62,6 @@ You should generally **not** edit the Marimo notebook.
 Refer the user to the `ki` terminal command for notebook changes.
 
 You should read the Marimo notebook to ensure that the cells are inserted correctly in the html.
-Marimo notebook cells without a name (functions named `_`) should be given a meaningful name,
-so that they can easily be inserted in the html file.
-This is the only kind of notebook change you should make.
 
 You must **never** remove the style block that has the designsystemet imports.
 This sets the styling for the Marimo UI components.
@@ -75,7 +72,7 @@ You should **always** try to use designsystemet layout components.
 **Avoid** using hardcoded style values - use designsystemet design tokens instead.
 In particular, you do **not** need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
 
-Start your process by reading relevant documentation here: https://github.com/digdir/designsystemet/tree/main/apps/www/app/content. 
+Start your process by reading relevant designsystemet docs from {designsystemet_docs_path} (only html, ignore React).
 Then use the question tool to clarify my requirements based on your findings.
 
 Main prompt (respond in the same language):
