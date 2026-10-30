@@ -128,8 +128,6 @@ def get_notebook_environment(app_file: Path) -> str:
             "uv",
             "python",
             "find",
-            "--no-project",
-            "--no-config",
             "--script",
             str(app_file),
         ],
