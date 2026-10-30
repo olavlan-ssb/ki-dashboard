@@ -23,7 +23,7 @@ def imports():
     import marimo as mo
     from ssb_parquedit import ParquEdit
 
-    pe = ParquEdit.local()
+    pe = ParquEdit.local() 
     return mo, pe
 
 
@@ -235,19 +235,26 @@ def change_history(message, mo, pe, saved, selected_table):
             if old_values.get(column) != new_values.get(column)
         ) or "Ingen feltforskjell"
 
+
     if edits is None or edits.empty:
         history_content = mo.md("Ingen endringer er registrert for denne tabellen ennå.")
     else:
         history_display = edits.copy()
+        if "snapshot_time" in history_display.columns:
+            history_display = history_display.sort_values("snapshot_time", ascending=False)
         history_display["diff"] = history_display.apply(format_diff, axis=1)
         display_columns = [
             column
             for column in history_columns
-            if column in edits.columns and column not in {"old_values", "new_values"}
+            if column in history_display.columns and column not in {"old_values", "new_values"}
         ]
         comment_position = display_columns.index("change_comment") + 1
         display_columns.insert(comment_position, "diff")
-        history_content = mo.ui.table(
+        history_summary = mo.md(
+            f"**{len(history_display)} registrerte endringer** · "
+            "Nyeste endring vises øverst."
+        )
+        history_table = mo.ui.table(
             history_display[display_columns],
             selection=None,
             pagination=True,
@@ -257,11 +264,13 @@ def change_history(message, mo, pe, saved, selected_table):
             column_widths={"diff": 420, "change_comment": 280},
             label="Registrerte endringer",
         )
+        history_content = mo.vstack([history_summary, history_table])
     history_section = mo.vstack([
         mo.md("Endringshistorikk"),
         history_content,
     ])
     history_section
+
     return
 
 

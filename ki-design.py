@@ -67,7 +67,7 @@ This sets the styling for the Marimo UI components.
 There is no proper way to further adjust the styling of the Marimo UI components.
 Do not remove Marimo-specific javascript code.
 
-You should **always** try to use designsystemet layout components.
+Always prefer using designsystemet layout components when possible.
 **Avoid** using hardcoded style values - use designsystemet design tokens instead.
 In particular, you do **not** need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
 
