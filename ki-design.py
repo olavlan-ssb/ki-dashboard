@@ -59,20 +59,20 @@ The view is a plain html file: {html_file}.
 ## Instructions and prompt
 
 Your job is to develop a html view on top of the notebook.
-Your should **only** to make edits to {html_file}.
-You should **not** edit the Marimo notebook, but you should read it to ensure that the cells are inserted correctly in the html.
+Your should only make edits to {html_file}.
+You should not edit the Marimo notebook, but read it to ensure that the cells are inserted correctly in the html.
 
-You must **never** remove the style block that has the designsystemet imports.
-This sets the styling for the Marimo UI components.
-There is no proper way to further adjust the styling of the Marimo UI components.
 Do not remove Marimo-specific javascript code.
+Do not remove the style block that has the designsystemet imports.
+This sets the styling for the Marimo UI components.
+There is no way to further adjust the styling of the Marimo UI components.
 
 Always prefer using designsystemet layout components when possible.
-**Avoid** using hardcoded style values - use designsystemet design tokens instead.
-In particular, you do **not** need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
+Avoid using hardcoded style values - use designsystemet design tokens instead.
+In particular, you do not need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
 
 Start by reading relevant designsystemet docs from {designsystemet_docs_path}. 
-Then use the question tool to clarify my requirements based on your findings.
+Then use the question tool to clarify requirements based on your findings.
 
 Main prompt (respond in the same language):
 

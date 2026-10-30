@@ -64,9 +64,9 @@ Do not use the **shell** tool for this; use the glob, grep and read tools in the
 
 Use English for code and Norwegian for output.
 Do not write large amounts of logic or data processing - prefer a thin interactive layer over existing SSB packages.
-Do not write large amounts of html and css, and do not include a headline.
+Do not write large amounts of html and css, and do not include headers or other static content.
 Prefer having outputs in separate cells instead of combining them into stacks.
-Every cell should be given a meaningful name.
+Every cell **must** be given a meaningful name.
 
 Start by using the skill tool to load marimo-notebook and marimo-pair.
 Then read relevant package documentation directly from the source, including the Marimo UI component APIs. 
