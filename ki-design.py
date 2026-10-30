@@ -171,32 +171,41 @@ def get_ssb_style_block() -> str:
 </style>"""
 
 def get_designsystemet_docs() -> Path:
-    destination = Path(".cache/designsystemet")
+    destination = Path("~/.cache/designsystemet")
     if destination.is_dir():
         return destination
+    print("Fetching designsystemet docs..")
     fetch_github_docs("digdir/designsystemet", "apps/www/app/content", destination)
     return destination
 
 
 def fetch_github_docs(repo_name: str, docs_path: str, destination: Path) -> None:
-    import tarfile
+    import shutil
     import tempfile
-    import urllib.request
 
-    # fetch repo as a zipped archive and extract only the contents of the docs folder
-    archive_url = f"https://github.com/{repo_name}/archive/refs/heads/main.tar.gz"
-    with tempfile.NamedTemporaryFile(suffix=".tar.gz") as archive:
-        urllib.request.urlretrieve(archive_url, archive.name)
-        with tarfile.open(archive.name, "r:gz") as tar:
-            prefix = f"/{docs_path}/"
-            for member in tar.getmembers():
-                if not member.name.endswith("/") and prefix in member.name:
-                    relative_path = Path(member.name.split(prefix, 1)[1])
-                    output_path = destination / relative_path
-                    output_path.parent.mkdir(parents=True, exist_ok=True)
-                    extracted = tar.extractfile(member)
-                    if extracted is not None:
-                        output_path.write_bytes(extracted.read())
+    with tempfile.TemporaryDirectory() as temporary:
+        subprocess.run(
+            [
+                "git",
+                "clone",
+                "--depth",
+                "1",
+                "--filter=blob:none",
+                "--sparse",
+                f"https://github.com/{repo_name}.git",
+                temporary,
+            ],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        subprocess.run(
+            ["git", "-C", temporary, "sparse-checkout", "set", docs_path],
+            check=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        shutil.copytree(Path(temporary) / docs_path, destination, dirs_exist_ok=True)
 
 if __name__ == "__main__":
     main()
