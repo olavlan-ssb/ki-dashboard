@@ -37,7 +37,9 @@ def main() -> None:
 
 def generate_context(arguments: Arguments) -> str:
     app_file = arguments.app_file.resolve()
-    designsystemet_docs_path = get_designsystemet_docs()
+    designsystemet_docs_path = fetch_github_docs(
+        "digdir/designsystemet", "apps/www/app/content"
+    )
     view = get_view(app_file)
     html_file = view.joinpath("index.html")
     return f'''\
@@ -170,16 +172,12 @@ def get_ssb_style_block() -> str:
 }
 </style>"""
 
-def get_designsystemet_docs() -> Path:
-    destination = Path("~/.cache/designsystemet")
+def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
+    destination = Path.home() / ".cache" / repo_name
     if destination.is_dir():
         return destination
-    print("Fetching designsystemet docs..")
-    fetch_github_docs("digdir/designsystemet", "apps/www/app/content", destination)
-    return destination
-
-
-def fetch_github_docs(repo_name: str, docs_path: str, destination: Path) -> None:
+    print("Fetching relevant docs..")
+    destination.parent.mkdir(parents=True, exist_ok=True)
     import shutil
     import tempfile
 
@@ -206,6 +204,7 @@ def fetch_github_docs(repo_name: str, docs_path: str, destination: Path) -> None
             stderr=subprocess.DEVNULL,
         )
         shutil.copytree(Path(temporary) / docs_path, destination, dirs_exist_ok=True)
+    return destination
 
 if __name__ == "__main__":
     main()
