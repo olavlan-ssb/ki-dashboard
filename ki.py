@@ -58,6 +58,7 @@ Before every change, you **must** first explain the change to me.
 Prefer running the command as few times as possible to avoid overwhelming me with requests.
 Avoid extensive testing - I will test the app myself and provide feedback.
 Do **not** run other shell commands.
+Do **not** edit the notebook directly.
 
 Before using packages, always read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
 Do not use the **shell** tool for this; use the glob, grep and read tools in the folder.
