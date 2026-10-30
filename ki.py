@@ -43,20 +43,15 @@ Result of `import marimo._code_mode as cm; help(cm)`:
 
 {get_marimo_python_api_docs(app_file)}
 
-## The current content of Marimo notebook
-
-{get_notebook_content(app_file)}
-
 ## Instructions and prompt
 
 Use the marimo-pair skill to develop the notebook.
 You do not have to run the setup commands again.
-Every cell **must** be given a meaningful name.
 
 Use the marimo-notebook skill to understand Marimo best practices.
 Note especially that outputs must be assigned to variables and used as the final expression of the cell.
 
-The notebook changes **must** be made through this shell command (see usage in marimo-pair skill):
+The notebook changes **must** be made through this shell command (see usage in the marimo-pair skill):
 
 bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "{MARIMO_ADRESS}" --file "{app_file}"
 
@@ -70,14 +65,13 @@ Do not use the **shell** tool for this; use the glob, grep and read tools in the
 
 Use English for code and Norwegian for output.
 Do not write large amounts of logic or data processing - prefer a thin interactive layer over existing SSB packages.
-The notebook should only have the plain interactive components.
-It should **not** have html and css.
-It should **not** have a headline.
-Prefer **not** combining into stacks - rather have one small output for each cell. 
-Inform user that all app design (layout and styling) should be done through the `ki-design` terminal command.
+Do not write large amounts of html and css, and do not include a headline.
+Prefer having outputs in separate cells instead of combining them into stacks.
+Every cell should be given a meaningful name.
 
-Start by reading the relevant package documentation directly from the source, including the Marimo UI component APIs. 
-Then use the question tool to clarify the requirements based on your findings.
+Start by loading the skills marimo-pair and marimo-notebook.
+Then read relevant package documentation directly from the source, including the Marimo UI component APIs. 
+Then use the question tool to clarify requirements based on your findings.
 
 Main prompt (respond in the same language):
 
@@ -141,24 +135,6 @@ def get_notebook_environment(app_file: Path) -> str:
 
 def get_marimo_python_api_docs(app_file: Path) -> str:
     return execute_python_in_notebook_session(app_file, "import marimo._code_mode as cm; help(cm)")
-
-
-def get_notebook_content(app_file: Path) -> str:
-    return execute_python_in_notebook_session(
-        app_file,
-        textwrap.dedent(
-            """\
-            import marimo._code_mode as cm
-
-            async with cm.get_context() as ctx:
-                for cell_id, cell in ctx.cells.items():
-                    print(f"### Cell {cell_id}")
-                    print("```python")
-                    print(cell.code)
-                    print("```")
-            """
-        ),
-    )
 
 
 if __name__ == "__main__":
