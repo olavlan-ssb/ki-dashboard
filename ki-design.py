@@ -74,7 +74,7 @@ You should **always** try to use designsystemet layout components.
 **Avoid** using hardcoded style values - use designsystemet design tokens instead.
 In particular, you do **not** need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
 
-Start your process by reading relevant designsystemet docs from {designsystemet_docs_path} (only html, ignore React).
+Start your process by reading relevant designsystemet docs from {designsystemet_docs_path}. 
 Then use the question tool to clarify my requirements based on your findings.
 
 Main prompt (respond in the same language):
