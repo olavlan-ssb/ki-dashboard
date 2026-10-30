@@ -7,6 +7,7 @@
 
 import argparse
 import asyncio
+import os
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
@@ -36,6 +37,7 @@ def main() -> None:
 
 def generate_context(arguments: Arguments) -> str:
     app_file = arguments.app_file.resolve()
+    designsystemet_path = get_designsystemet_docs()
     view = get_view(app_file)
     html_file = view.joinpath("index.html")
     return f'''\
@@ -171,7 +173,33 @@ def get_ssb_style_block() -> str:
 }
 </style>"""
 
+def get_designsystemet_docs() -> Path:
+    destination = Path(".cache/designsystemet")
+    if destination.is_dir():
+        return destination
+    fetch_github_docs("digdir/designsystemet", "apps/www/app/content", destination)
+    return destination
 
+
+def fetch_github_docs(repo_name: str, docs_path: str, destination: Path) -> None:
+    import tarfile
+    import tempfile
+    import urllib.request
+
+    # fetch repo as a zipped archive and extract only the contents of the docs folder
+    archive_url = f"https://github.com/{repo_name}/archive/refs/heads/main.tar.gz"
+    with tempfile.NamedTemporaryFile(suffix=".tar.gz") as archive:
+        urllib.request.urlretrieve(archive_url, archive.name)
+        with tarfile.open(archive.name, "r:gz") as tar:
+            prefix = f"/{docs_path}/"
+            for member in tar.getmembers():
+                if not member.name.endswith("/") and prefix in member.name:
+                    relative_path = Path(member.name.split(prefix, 1)[1])
+                    output_path = destination / relative_path
+                    output_path.parent.mkdir(parents=True, exist_ok=True)
+                    extracted = tar.extractfile(member)
+                    if extracted is not None:
+                        output_path.write_bytes(extracted.read())
 
 if __name__ == "__main__":
     main()
