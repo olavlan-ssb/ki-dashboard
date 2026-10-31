@@ -82,8 +82,9 @@ def main() -> None:
     for source in sources:
         print(f"  - {source.path}")
     print()
-    print("Relevant kontekst er lastet, og den agentiske sesjonen er klar.")
-    print("Skriv inn hva du ønsker skal gjøres og trykk Enter (eller Ctrl+C for å avbryte).")
+    print("Relevant kontekst er lastet.")
+    print("Husk at det er lurt å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon.")
+    print("Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).")
     print()
 
     initial_prompt = input("> ")
