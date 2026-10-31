@@ -23,8 +23,6 @@ MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 @dataclass
 class Arguments:
     dry_run: bool
-    design: bool
-    prompt: str
 
 
 @dataclass
@@ -43,8 +41,9 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
-    app_file = find_active_notebook()
-    view = get_view(app_file)
+    initial_prompt = input("Beskriv ønsket endring: ")
+    notebook_file = find_active_notebook()
+    view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
     dapla_manual = fetch_github_docs(
@@ -64,8 +63,8 @@ def main() -> None:
     ]
 
     instructions = get_intructions(sources)
-    context = get_context(app_file, html_file)
-    agent_session = AgentSession(sources, instructions, context, arguments.prompt)
+    context = get_context(notebook_file, html_file)
+    agent_session = AgentSession(sources, instructions, context, initial_prompt)
 
     if arguments.dry_run:
         print(build_prompt(agent_session))
@@ -217,16 +216,8 @@ Main prompt (respond in the same language):
 def parse_args() -> Arguments:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--design", action="store_true")
-    parser.add_argument("prompt", nargs="?")
     args = parser.parse_args()
-    if args.prompt is None:
-        parser.error("det må angis en kort beskrivelse av ønsket endring i filen")
-    return Arguments(
-        dry_run=args.dry_run,
-        design=args.design,
-        prompt=args.prompt,
-    )
+    return Arguments(dry_run=args.dry_run)
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
