@@ -7,9 +7,12 @@
 
 import argparse
 import asyncio
+import json
 import os
 import subprocess
 import sys
+import urllib.request
+from typing import NoReturn, cast
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -21,7 +24,6 @@ MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 class Arguments:
     dry_run: bool
     design: bool
-    app_file: Path
     prompt: str
 
 
@@ -40,7 +42,8 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
-    context = generate_context(arguments)
+    app_file = find_active_notebook()
+    context = generate_context(arguments, app_file)
 
     if arguments.dry_run:
         print(context)
@@ -48,14 +51,14 @@ def main() -> None:
         subprocess.run(["opencode", "--prompt", context], check=True)
 
 
-def generate_context(arguments: Arguments) -> str:
+def generate_context(arguments: Arguments, app_file: Path) -> str:
     if arguments.design:
-        return generate_design_context(arguments)
-    return generate_notebook_context(arguments)
+        return generate_design_context(arguments, app_file)
+    return generate_notebook_context(arguments, app_file)
 
 
-def generate_notebook_context(arguments: Arguments) -> str:
-    app_file = arguments.app_file.resolve()
+def generate_notebook_context(arguments: Arguments, app_file: Path) -> str:
+    app_file = app_file.resolve()
     dapla_manual_docs_path = fetch_github_docs(
         "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
     )
@@ -108,8 +111,8 @@ Main prompt (respond in the same language):
     '''
 
 
-def generate_design_context(arguments: Arguments) -> str:
-    app_file = arguments.app_file.resolve()
+def generate_design_context(arguments: Arguments, app_file: Path) -> str:
+    app_file = app_file.resolve()
     designsystemet_docs_path = fetch_github_docs(
         "digdir/designsystemet", "apps/www/app/content"
     )
@@ -162,27 +165,39 @@ def parse_args() -> Arguments:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--design", action="store_true")
-    parser.add_argument("app_file", type=Path, nargs="?")
     parser.add_argument("prompt", nargs="?")
     args = parser.parse_args()
-    if args.app_file is None:
-        parser.error("det første argumentet må være en eksisterende Marimo-fil")
-    if not args.app_file.is_file():
-        parser.error(f"Marimo-filen finnes ikke: {args.app_file}")
     if args.prompt is None:
-        parser.error("det andre argumentet må være en kort beskrivelse av ønsket endring i filen")
+        parser.error("det må angis en kort beskrivelse av ønsket endring i filen")
     return Arguments(
         dry_run=args.dry_run,
         design=args.design,
-        app_file=args.app_file,
         prompt=args.prompt,
     )
 
 
-def exit_because_notebook_session_is_not_active(app_file: Path) -> None:
-    print(f"Filen '{app_file}' må være åpnet i Marimo-grensesnittet", file=sys.stderr)
+
+
+def exit_because_notebook_session_is_not_active() -> NoReturn:
+    print("Notebook-filen må være åpen i Marimo-grensesnittet.", file=sys.stderr)
     raise SystemExit(1)
 
+
+def find_active_notebook() -> Path:
+    try:
+        with urllib.request.urlopen(f"{MARIMO_ADRESS}/api/sessions", timeout=2) as response:
+            sessions = json.load(response)
+    except Exception:
+        exit_because_notebook_session_is_not_active()
+
+    if not isinstance(sessions, dict):
+        exit_because_notebook_session_is_not_active()
+
+    first = next(iter(sessions.values()), None)
+    path = first.get("path") if isinstance(first, dict) else None
+    if not isinstance(path, str) or not Path(path).is_file():
+        exit_because_notebook_session_is_not_active()
+    return Path(path)
 
 def run_in_marimo_session(app_file: Path, code: str) -> str:
     command = [
@@ -197,7 +212,7 @@ def run_in_marimo_session(app_file: Path, code: str) -> str:
     ]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
-        exit_because_notebook_session_is_not_active(app_file)
+        exit_because_notebook_session_is_not_active()
     return result.stdout
 
 
@@ -215,7 +230,7 @@ def get_notebook_environment(app_file: Path) -> str:
         env={**os.environ, "VIRTUAL_ENV": ""},
     )
     if result.returncode != 0:
-        exit_because_notebook_session_is_not_active(app_file)
+        exit_because_notebook_session_is_not_active()
     return result.stdout.strip()
 
 
