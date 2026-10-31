@@ -7,7 +7,7 @@
 # requires-python = ">=3.14,<3.15"
 #
 # [tool.marimo-studio]
-# default = "ssb"
+# default = "dashboard"
 #
 # [tool.marimo-studio.cells]
 # ///
