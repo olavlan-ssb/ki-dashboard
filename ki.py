@@ -90,7 +90,7 @@ Avoid extensive testing - I will test the app myself and provide feedback.
 Do **not** run other shell commands.
 Do **not** edit the notebook directly.
 
-Before using packages, always read the relevant package APIs directly from the source: {get_notebook_environment(app_file)}.
+Before using packages, always read the relevant package APIs directly from the source: {get_notebook_site_packages(app_file)}.
 Do not use the **shell** tool for this; use the glob, grep and read tools in the folder.
 
 Use English for code and Norwegian for output.
@@ -216,22 +216,11 @@ def run_in_marimo_session(app_file: Path, code: str) -> str:
     return result.stdout
 
 
-def get_notebook_environment(app_file: Path) -> str:
-    result = subprocess.run(
-        [
-            "uv",
-            "python",
-            "find",
-            "--script",
-            str(app_file),
-        ],
-        capture_output=True,
-        text=True,
-        env={**os.environ, "VIRTUAL_ENV": ""},
-    )
-    if result.returncode != 0:
-        exit_because_notebook_session_is_not_active()
-    return result.stdout.strip()
+def get_notebook_site_packages(app_file: Path) -> str:
+    return run_in_marimo_session(
+        app_file,
+        "import sysconfig; print(sysconfig.get_path('purelib'))",
+    ).strip()
 
 
 def get_marimo_python_api_docs(app_file: Path) -> str:
