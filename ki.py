@@ -44,34 +44,71 @@ class AgentSession:
 def main() -> None:
     arguments = parse_args()
     app_file = find_active_notebook()
+    view = get_view(app_file)
+    html_file = view.joinpath("index.html")
 
     dapla_manual = fetch_github_docs(
         "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
     )
     designsystemet = fetch_github_docs("digdir/designsystemet", "apps/www/app/content")
-    # TODO add marimo-notebook skill from home folder / .agents / skill / marimo-notebook, say to use it before developing the notebook
-    # TODO add marimo-pair skill similarly, say to use it before developing the notebook
+    marimo_notebook = Path.home() / ".agents" / "skills" / "marimo-notebook"
+    marimo_pair = Path.home() / ".agents" / "skills" / "marimo-pair"
     sources: list[Source] = [
-        Source(dapla_manual, "Always read releavant documentation from here before developing anything."),
+        Source(dapla_manual, "Always read relevant documentation from here before developing anything."),
         Source(
             designsystemet,
             "Read relevant documentation from here before developing the html view.",
         ),
+        Source(marimo_notebook, "Read this skill before developing the notebook."),
+        Source(marimo_pair, "Read this skill before developing the notebook."),
     ]
 
-    
-    instructions = []
-    context = "" 
-    initial_prompt = ""
-    agent_session = AgentSession(sources, instructions, context, initial_prompt)
+    instructions = get_intructions(sources)
+    context = get_context(app_file, html_file)
+    agent_session = AgentSession(sources, instructions, context, arguments.prompt)
 
-    # TODO create and call start_opencode(agent_session)
     if arguments.dry_run:
-        print(context)
+        print(build_prompt(agent_session))
     else:
-        subprocess.run(["opencode", "--prompt", context], check=True)
+        start_opencode(agent_session)
 
 
+def get_intructions(sources: list[Source]) -> list[str]:
+    instructions = [
+        "Develop the reactive Marimo application and its Marimo Studio HTML view.",
+        "Before making changes, explain the change and ask questions when requirements are unclear.",
+        "Do not edit the notebook directly; use the marimo-pair execute-code script for notebook edits.",
+        "Before using packages, read their APIs directly from the notebook environment's site-packages.",
+        "Use English for code and Norwegian for output.",
+        "Prefer a thin interactive layer over existing SSB packages and avoid extensive testing.",
+    ]
+    instructions.extend(f"{source.usage} Path: {source.path}" for source in sources)
+    return instructions
+
+
+def get_context(app_file: Path, html_file: Path) -> str:
+    return f"""## Current Marimo notebook ({app_file})
+
+{app_file.read_text(encoding="utf-8")}
+
+## Current HTML view ({html_file})
+
+{html_file.read_text(encoding="utf-8")}
+"""
+
+
+def build_prompt(agent_session: AgentSession) -> str:
+    prompt = "# Instructions\n\n"
+    prompt += "\n".join(f"- {instruction}" for instruction in agent_session.instructions)
+    prompt += f"\n\n# Context\n\n{agent_session.context}"
+    prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
+    return prompt
+
+
+def start_opencode(agent_session: AgentSession) -> None:
+    subprocess.run(["opencode", "--prompt", build_prompt(agent_session)], check=True)
+
+# TODO leave function as is for reference
 def generate_notebook_context(arguments: Arguments, app_file: Path) -> str:
     app_file = app_file.resolve()
     dapla_manual_docs_path = fetch_github_docs(
@@ -126,6 +163,7 @@ Main prompt (respond in the same language):
     '''
 
 
+# TODO leave function as is for reference
 def generate_design_context(arguments: Arguments, app_file: Path) -> str:
     app_file = app_file.resolve()
     designsystemet_docs_path = fetch_github_docs(
