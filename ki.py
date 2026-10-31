@@ -24,6 +24,11 @@ MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 class Arguments:
     dry_run: bool
 
+def parse_args() -> Arguments:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--dry-run", action="store_true")
+    args = parser.parse_args()
+    return Arguments(dry_run=args.dry_run)
 
 @dataclass
 class Source:
@@ -41,7 +46,6 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
-    initial_prompt = input("Beskriv ønsket endring: ")
     notebook_file = find_active_notebook()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
@@ -52,6 +56,7 @@ def main() -> None:
     designsystemet = fetch_github_docs("digdir/designsystemet", "apps/www/app/content")
     marimo_notebook = Path.home() / ".agents" / "skills" / "marimo-notebook"
     marimo_pair = Path.home() / ".agents" / "skills" / "marimo-pair"
+    notebook_python_packages = get_notebook_site_packages(notebook_file)
     sources: list[Source] = [
         Source(dapla_manual, "Always read relevant documentation from here before developing anything."),
         Source(
@@ -60,12 +65,29 @@ def main() -> None:
         ),
         Source(marimo_notebook, "Read this skill before developing the notebook."),
         Source(marimo_pair, "Read this skill before developing the notebook."),
+        Source(
+            Path(notebook_python_packages),
+            "Always read relevant API documentation here before using packages.",
+        ),
     ]
 
     instructions = get_intructions(sources)
     context = get_context(notebook_file, html_file)
-    agent_session = AgentSession(sources, instructions, context, initial_prompt)
 
+    print("Aktive Marimo-filer")
+    print(f"  Notebook: {notebook_file}")
+    print(f"  View:     {html_file}")
+    print()
+    print("Kilder lastet")
+    for source in sources:
+        print(f"  - {source.path}")
+    print()
+    print("Relevant kontekst er lastet, og den agentiske sesjonen er klar.")
+    print("Skriv inn hva du ønsker skal gjøres og trykk Enter (eller Ctrl+C for å avbryte).")
+    print()
+
+    initial_prompt = input("> ")
+    agent_session = AgentSession(sources, instructions, context, initial_prompt)
     if arguments.dry_run:
         print(build_prompt(agent_session))
     else:
@@ -213,11 +235,6 @@ Main prompt (respond in the same language):
     """
 
 
-def parse_args() -> Arguments:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--dry-run", action="store_true")
-    args = parser.parse_args()
-    return Arguments(dry_run=args.dry_run)
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
