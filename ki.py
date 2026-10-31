@@ -25,6 +25,19 @@ class Arguments:
     prompt: str
 
 
+@dataclass
+class Source:
+    path: Path
+    usage: str
+
+@dataclass
+class AgentSession:
+    sources: list[Source]
+    instructions: list[str]
+    context: str 
+    initial_prompt: str
+
+
 def main() -> None:
     arguments = parse_args()
     context = generate_context(arguments)
