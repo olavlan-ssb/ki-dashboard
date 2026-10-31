@@ -43,18 +43,15 @@ class AgentSession:
 def main() -> None:
     arguments = parse_args()
     app_file = find_active_notebook()
-    context = generate_context(arguments, app_file)
+    if arguments.design:
+        context = generate_design_context(arguments, app_file)
+    else:
+        context = generate_notebook_context(arguments, app_file)
 
     if arguments.dry_run:
         print(context)
     else:
         subprocess.run(["opencode", "--prompt", context], check=True)
-
-
-def generate_context(arguments: Arguments, app_file: Path) -> str:
-    if arguments.design:
-        return generate_design_context(arguments, app_file)
-    return generate_notebook_context(arguments, app_file)
 
 
 def generate_notebook_context(arguments: Arguments, app_file: Path) -> str:
@@ -174,8 +171,6 @@ def parse_args() -> Arguments:
         design=args.design,
         prompt=args.prompt,
     )
-
-
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
