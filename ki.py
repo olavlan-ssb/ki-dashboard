@@ -32,22 +32,40 @@ class Source:
     path: Path
     usage: str
 
+
 @dataclass
 class AgentSession:
     sources: list[Source]
     instructions: list[str]
-    context: str 
+    context: str
     initial_prompt: str
 
 
 def main() -> None:
     arguments = parse_args()
     app_file = find_active_notebook()
-    if arguments.design:
-        context = generate_design_context(arguments, app_file)
-    else:
-        context = generate_notebook_context(arguments, app_file)
 
+    dapla_manual = fetch_github_docs(
+        "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
+    )
+    designsystemet = fetch_github_docs("digdir/designsystemet", "apps/www/app/content")
+    # TODO add marimo-notebook skill from home folder / .agents / skill / marimo-notebook, say to use it before developing the notebook
+    # TODO add marimo-pair skill similarly, say to use it before developing the notebook
+    sources: list[Source] = [
+        Source(dapla_manual, "Always read releavant documentation from here before developing anything."),
+        Source(
+            designsystemet,
+            "Read relevant documentation from here before developing the html view.",
+        ),
+    ]
+
+    
+    instructions = []
+    context = "" 
+    initial_prompt = ""
+    agent_session = AgentSession(sources, instructions, context, initial_prompt)
+
+    # TODO create and call start_opencode(agent_session)
     if arguments.dry_run:
         print(context)
     else:
@@ -180,7 +198,9 @@ def exit_because_notebook_session_is_not_active() -> NoReturn:
 
 def find_active_notebook() -> Path:
     try:
-        with urllib.request.urlopen(f"{MARIMO_ADRESS}/api/sessions", timeout=2) as response:
+        with urllib.request.urlopen(
+            f"{MARIMO_ADRESS}/api/sessions", timeout=2
+        ) as response:
             sessions = json.load(response)
     except Exception:
         exit_because_notebook_session_is_not_active()
@@ -193,6 +213,7 @@ def find_active_notebook() -> Path:
     if not isinstance(path, str) or not Path(path).is_file():
         exit_because_notebook_session_is_not_active()
     return Path(path)
+
 
 def run_in_marimo_session(app_file: Path, code: str) -> str:
     command = [
