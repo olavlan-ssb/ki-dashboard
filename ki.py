@@ -56,26 +56,24 @@ def main() -> None:
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
-    sources = get_sources()
+    sources = get_sources(notebook_file)
     instructions = get_intructions(sources)
     context = generate_context(notebook_file, html_file)
 
-    print("Aktive Marimo-filer")
-    print(f"  Notebook: {notebook_file}")
-    print(f"  View:     {html_file}")
-    print()
-    print("Kilder lastet")
-    for source in sources:
-        print(f"    {source.path}")
-    print()
-    print("Relevant kontekst er lastet.")
-    print(
-        "Husk at det er lurt å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon."
-    )
-    print(
-        "Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte)."
-    )
-    print()
+    welcome_message = [
+        "Aktive Marimo-filer",
+        f"  Notebook: {notebook_file}",
+        f"  View:     {html_file}",
+        "",
+        "Kilder lastet",
+        *(f"    {source.path}" for source in sources),
+        "",
+        "Relevant kontekst er lastet.",
+        "Det anbefales å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon.",
+        "Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).",
+        "",
+    ]
+    print("\n".join(welcome_message))
 
     initial_prompt = input("> ")
     agent_session = AgentSession(
@@ -85,6 +83,7 @@ def main() -> None:
         print(build_prompt(agent_session))
     else:
         start_agent(agent_session)
+
 
 def build_prompt(agent_session: AgentSession) -> str:
     prompt = "# Instructions\n\n"
@@ -109,7 +108,8 @@ def start_agent(agent_session: AgentSession) -> None:
     if exit_code != 0:
         raise subprocess.CalledProcessError(exit_code, "opencode")
 
-def get_sources() -> list[Source]:
+
+def get_sources(notebook_file: Path) -> list[Source]:
     dapla_manual = fetch_github_docs(
         "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
     )
@@ -120,14 +120,20 @@ def get_sources() -> list[Source]:
     return [
         Source(
             dapla_manual,
-            "Always read relevant documentation from here before developing anything.",
+            "Always read relevant documentation from here before developing the notebook and using packages. It provides SSB-specific documentation that should be followed.",
         ),
         Source(
             designsystemet,
-            "Read relevant documentation from here before developing the html view.",
+            "Read relevant documentation from here before developing the html view. Always prefer using designsystemet components and design tokens instead of hardcoded css values. In particular, SSB theming come out of the box with the existing css imports.",
         ),
-        Source(marimo_notebook, "Read this skill before developing the notebook."),
-        Source(marimo_pair, "Read this skill before developing the notebook."),
+        Source(
+            marimo_notebook,
+            "Read this skill before working with Marimo outputs. Summary: always put the output in a variable and use that as the last expression of the cell.",
+        ),
+        Source(
+            marimo_pair,
+            "Use this skill to develop the notebook. In particular, you should always use the provided scripts to make edits to the notebook.",
+        ),
         Source(
             Path(notebook_python_packages),
             "Always read relevant API documentation here before using packages.",
@@ -137,13 +143,18 @@ def get_sources() -> list[Source]:
 
 def get_intructions(sources: list[Source]) -> list[str]:
     instructions = [
-        "Develop the reactive Marimo application and its Marimo Studio html view.",
-        "In general you should only use the marimo-pair execute-code script for developing the notebook. Direct writes to the notebook  only be done for small fixes and verified with `uv run marimo check APP_FILE`.", #TODO replace with actual app name
+        f"Your job is to help develop the reactive Marimo application {} and its Marimo Studio html view {}.", #TODO add file names
+        "Try to keep logic in the notebook and layout/styling in the html view."
         "Use English for code and Norwegian for output.",
         "Avoid implementing large amounts of logic and data-processing; prefer a thin layer over excisting SSB packages.",
         "",
+        "The following is the list of available reasources and when/how they should be used. Do not use the shell tool to read them; only use the grep, glob and read tools.",
     ]
-    instructions.extend(f"{source.usage} Path: {source.path}" for source in sources)
+    instructions.extend(f"  - {source.path}: {source.usage}" for source in sources)
+    instructions.extend(
+        "Based on your findings, use the question tools to clarify the user's requirements, e.g. which UI components they want to use or how they want to use the Python packages."
+    )
+
     return instructions
 
 
@@ -156,115 +167,6 @@ def generate_context(app_file: Path, html_file: Path) -> str:
 
 {html_file.read_text(encoding="utf-8")}
 """
-
-
-
-
-# TODO leave function as is for reference
-def generate_notebook_context(arguments: Arguments, app_file: Path) -> str:
-    app_file = app_file.resolve()
-    dapla_manual_docs_path = fetch_github_docs(
-        "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
-    )
-    return f'''\
-# Context
-
-I want help developing a reactive Marimo application in {app_file}.
-
-## The Marimo Python API for editing a Marimo notebook
-
-Result of `import marimo._code_mode as cm; help(cm)`:
-
-{get_marimo_python_api_docs(app_file)}
-
-## Instructions and prompt
-
-Use the marimo-notebook skill to understand Marimo concepts.
-Note especially that outputs must be assigned to variables and used as the final expression of the cell.
-
-Use the marimo-pair skill to develop the notebook.
-When adding an editing cells, only insert the content, not marimo cell decorators/functions.
-You do not have to run the setup commands, the notebook is already connected:
-
-bash ~/.agents/skills/marimo-pair/scripts/execute-code.sh --url "{MARIMO_ADRESS}" --file "{app_file}"
-
-Before every change, you **must** first explain the change to me.
-Prefer running the command as few times as possible to avoid overwhelming me with requests.
-Avoid extensive testing - I will test the app myself and provide feedback.
-Do **not** run other shell commands.
-Do **not** edit the notebook directly.
-
-Before using packages, always read the relevant package APIs directly from the source: {get_notebook_site_packages(app_file)}.
-Do not use the **shell** tool for this; use the glob, grep and read tools in the folder.
-
-Use English for code and Norwegian for output.
-Do not write large amounts of logic or data processing - prefer a thin interactive layer over existing SSB packages.
-Do not write large amounts of html and css, and do not include headers or other static content.
-Prefer having outputs in separate cells instead of combining them into stacks.
-Every cell **must** be given a meaningful name.
-
-Start by using the skill tool to load marimo-notebook and marimo-pair.
-Then read relevant package documentation directly from the source, including the Marimo UI component APIs.
-Read relevant statistikkere documentation from {dapla_manual_docs_path}. 
-Then use the question tool to clarify requirements based on your findings.
-
-Main prompt (respond in the same language):
-
-*{arguments.prompt}*
-
-    '''
-
-
-# TODO leave function as is for reference
-def generate_design_context(arguments: Arguments, app_file: Path) -> str:
-    app_file = app_file.resolve()
-    designsystemet_docs_path = fetch_github_docs(
-        "digdir/designsystemet", "apps/www/app/content"
-    )
-    dapla_manual_docs_path = fetch_github_docs(
-        "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
-    )
-    view = get_view(app_file)
-    html_file = view.joinpath("index.html")
-    return f"""\
-# Context
-
-I want help developing a Marimo Studio view on top of my Marimo application {app_file}.
-The view is a plain html file: {html_file}.
-
-## The current Marimo notebook content
-
-{app_file.read_text(encoding="utf-8")}
-
-## The current view content
-
-{html_file.read_text(encoding="utf-8")}
-
-## Instructions and prompt
-
-Your job is to develop a html view on top of the notebook.
-Your should only make edits to {html_file}.
-You should not edit the Marimo notebook, but read it to ensure that the cells are inserted correctly in the html.
-
-Do not remove Marimo-specific javascript code.
-Do not remove the style block that has the designsystemet imports.
-This sets the styling for the Marimo UI components.
-There is no way to further adjust the styling of the Marimo UI components.
-
-Always prefer using designsystemet layout components when possible.
-Avoid using hardcoded style values - use designsystemet design tokens instead.
-In particular, you do not need to hardcode anything to get SSB (Statistisk sentralbyrå) theme.
-
-Start by reading relevant designsystemet docs from {designsystemet_docs_path}.
-Also read the relevant documentation for statistikkere from {dapla_manual_docs_path}.
-Then use the question tool to clarify requirements based on your findings.
-
-Main prompt (respond in the same language):
-
-*{arguments.prompt}*
-
-    """
-
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
     print("Notebook-filen må være åpen i Marimo-grensesnittet.", file=sys.stderr)
