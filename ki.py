@@ -64,22 +64,27 @@ def main() -> None:
 
     sources = get_sources(notebook_file)
     system_prompt = get_system_prompt(sources, notebook_file, html_file)
-    welcome_message = [
-        "Aktive Marimo-filer",
-        f"  Notebook: {notebook_file}",
-        f"  View:     {html_file}",
-        "",
-        "Relvant kontekst er lastet.",
-        "",
-        f"{ITALIC_TEXT_START}Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, slik at agenten får rask tilgang til relevant pakkedokumentasjon.",
-        "",
-        f"Når agenten er ferdig kan du se alle endringene med kommandoen {GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}.",
-        f"Kommandoen {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP} kan brukes til å angre agentens endringer.",
-        "",
-        f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}",
-        "",
-    ]
-    print("\n".join(welcome_message))
+    welcome_message = (
+        f"\nAktive Marimo-filer\n"
+        f"  Notebook: {notebook_file}\n"
+        f"  View:     {html_file}\n"
+        f"\n"
+        f"Relvant kontekst er lastet.\n"
+        f"\n"
+        f"{ITALIC_TEXT_START}Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). "
+        f"Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. "
+        f"Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. "
+        f"Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, "
+        f"slik at agenten får rask tilgang til relevant pakkedokumentasjon.\n"
+        f"\n"
+        f"Når agenten er ferdig kan du se alle endringene med kommandoen "
+        f"{GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}.\n"
+        f"Kommandoen {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP} "
+        f"kan brukes til å angre agentens endringer.\n"
+        f"\n"
+        f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}\n"
+    )
+    print(welcome_message)
 
     initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
     agent_session = AgentSession(
