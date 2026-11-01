@@ -49,7 +49,7 @@ class Source:
 @dataclass
 class AgentSession:
     sources: list[Source]
-    system_prompt: list[str]
+    system_prompt: str
     initial_prompt: str
     writeable_directory: Path
 
@@ -64,7 +64,7 @@ def main() -> None:
 
     sources = get_sources(notebook_file)
     system_prompt = get_system_prompt(sources, notebook_file, html_file)
-    welcome_message = (
+    print(
         f"\nAktive Marimo-filer\n"
         f"  Notebook: {notebook_file}\n"
         f"  View:     {html_file}\n"
@@ -84,7 +84,6 @@ def main() -> None:
         f"\n"
         f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}\n"
     )
-    print(welcome_message)
 
     initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
     agent_session = AgentSession(
@@ -135,7 +134,7 @@ def validate_github_repository() -> None:
 
 def build_prompt(agent_session: AgentSession) -> str:
     prompt = "# System prompt\n\n"
-    prompt += "\n".join(f"{instruction}" for instruction in agent_session.system_prompt)
+    prompt += agent_session.system_prompt
     prompt += f"\n\n# User prompt (respond in same language)\n\n{agent_session.initial_prompt}"
     return prompt
 
@@ -188,20 +187,20 @@ def get_sources(notebook_file: Path) -> list[Source]:
 
 def get_system_prompt(
     sources: list[Source], notebook_file: Path, html_file: Path
-) -> list[str]:
-    system_prompt = [
-        f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`. You should not edit other files.",
-        "Try to keep logic in the notebook and layout/styling in the HTML view.",
-        "Use English for code and Norwegian for output.",
-        "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.",
-        "The following is the list of available resources and when/how they should be used. Do not use the shell tool to read them; only use the grep, glob and read tools.",
-    ]
-    system_prompt.extend(f"  - {source.path}: {source.usage}" for source in sources)
-    system_prompt.append(
-        "Based on your findings, use the question tools to clarify the user's requirements, e.g. which UI components they want to use or how they want to use the Python packages."
+) -> str:
+    return (
+        f"Your job is to help develop the reactive Marimo application `{notebook_file}` "
+        f"and its Marimo Studio HTML view `{html_file}`. You should not edit other files.\n"
+        f"Try to keep logic in the notebook and layout/styling in the HTML view.\n"
+        f"Use English for code and Norwegian for output.\n"
+        f"Avoid implementing large amounts of logic and data processing; prefer a thin layer "
+        f"over existing SSB packages.\n"
+        f"The following is the list of available resources and when/how they should be used. "
+        f"Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
+        f"{'\n'.join(f'  - {source.path}: {source.usage}' for source in sources)}\n"
+        f"Based on your findings, use the question tools to clarify the user's requirements, "
+        f"e.g. which UI components they want to use or how they want to use the Python packages."
     )
-
-    return system_prompt
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
