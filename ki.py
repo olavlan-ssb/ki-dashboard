@@ -2,7 +2,6 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo-studio==0.4.0",
-#     "sandlock>=0.9.0",
 # ]
 # ///
 
@@ -16,7 +15,6 @@ import sys
 import urllib.request
 from typing import NoReturn, cast
 
-from sandlock import Sandbox
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -132,106 +130,84 @@ def build_prompt(agent_session: AgentSession) -> str:
     return prompt
 
 
-def get_provider_domain() -> str:
-    return "opencode.ai:443"
-
-
 def start_agent(agent_session: AgentSession) -> None:
-    home = Path.home()
-    pi_writable_path = home / ".pi" / "agent"
-    marimo_servers_path = (
-        Path(os.environ.get("XDG_STATE_HOME", home / ".local" / "state"))
-        / "marimo"
-        / "servers"
-    )
-    for path in [pi_writable_path]:
-        path.mkdir(parents=True, exist_ok=True)
-
-    sandbox = Sandbox(
-        fs_readable=[
-            str(home),
-            "/nix/store",
-            "/run",
-            "/bin",
-            "/usr",
-            "/lib64",
-            "/etc",
-            "/proc",
-            "/dev",
-        ],
-        fs_writable=[
-            str(agent_session.writeable_directory),
-            str(pi_writable_path),
-            str(marimo_servers_path),
-            "/tmp",
-            "/dev/null"
-        ],
-        cwd=str(agent_session.writeable_directory),
-        net_allow=[get_provider_domain(), MARIMO_ADRESS.removeprefix("http://")],
-        extra_allow_syscalls=["sysv_ipc"],
-    )
-    exit_code = sandbox.run_interactive(
-        [
-            "pi",
-            "--no-context-files",
-            "--tools",
-            "bash,read,edit,grep,ls",
-            "--system-prompt",
-            agent_session.system_prompt,
-            agent_session.initial_prompt,
-        ]
-    )
-    if exit_code != 0:
-        raise subprocess.CalledProcessError(exit_code, "pi")
+    command = ["opencode", "--prompt", build_prompt(agent_session)]
+    subprocess.run(command, cwd=agent_session.writeable_directory, check=True)
 
 
 def get_sources(notebook_file: Path) -> list[Source]:
-    dapla_manual = fetch_github_docs(
-        "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
+    notebook_python_packages: Source = Source(
+        Path(get_notebook_site_packages(notebook_file)),
+        ("Always read relevant API documentation here before using packages."),
     )
-    designsystemet = fetch_github_docs("digdir/designsystemet", "apps/www/app/content")
-    marimo_notebook = Path.home() / ".agents" / "skills" / "marimo-notebook"
-    marimo_pair = Path.home() / ".agents" / "skills" / "marimo-pair"
-    notebook_python_packages = get_notebook_site_packages(notebook_file)
+
+    dapla_manual: Source = Source(
+        fetch_github_docs(
+            "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
+        ),
+        (
+            "Always read relevant documentation from here before developing the notebook and using packages. "
+            "It provides SSB-specific guidelines that should be followed."
+        ),
+    )
+
+    designsystemet: Source = Source(
+        fetch_github_docs("digdir/designsystemet", "apps/www/app/content"),
+        (
+            "Read relevant documentation from here before developing the html view. "
+            "Always prefer using designsystemet components and design tokens instead of hardcoded css values. "
+            "In particular, SSB theming come out of the box with the existing css imports."
+        ),
+    )
+
+
+    marimo_pair: Source = Source(
+        Path.home() / ".agents" / "skills" / "marimo-pair",
+        (
+            "Use this skill to develop the notebook, instead of making direct edits to the file."
+            f"It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADRESS}."
+            "You must give the user a short explanation before each time you use the marimo-pair script."
+        ),
+    )
+
+    marimo_notebook: Source = Source(
+        Path.home() / ".agents" / "skills" / "marimo-notebook",
+        (    "Use this skill instead of marimo-pair when you only need to make minor changes,"
+            "that can be made through direct edits to the notebook."
+            "When using marimo-pair, use this skill to understand how Marimo outputs work. "
+            "Summary: always put the output in a variable and use that as the last expression of the cell."
+        ),
+    )
+
+    #TODO fetch github docs from marimo-team/marimo-studio, path "docs"
+    #say that it can be used to understand how marimo-studio works, but it's generally not necessary
+
     return [
-        Source(
-            dapla_manual,
-            "Always read relevant documentation from here before developing the notebook and using packages. It provides SSB-specific guidelines that should be followed.",
-        ),
-        Source(
-            designsystemet,
-            "Read relevant documentation from here before developing the html view. Always prefer using designsystemet components and design tokens instead of hardcoded css values. In particular, SSB theming come out of the box with the existing css imports.",
-        ),
-        Source(
-            marimo_notebook,
-            "Read this skill before working with Marimo outputs. Summary: always put the output in a variable and use that as the last expression of the cell.",
-        ),
-        Source(
-            marimo_pair,
-            f"Use this skill to develop the notebook. It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADRESS}.",
-        ),
-        Source(
-            Path(notebook_python_packages),
-            "Always read relevant API documentation here before using packages.",
-        ),
+        notebook_python_packages,
+        dapla_manual,
+        designsystemet,
+        marimo_pair,
+        marimo_notebook,
     ]
 
 
 def get_system_prompt(
     sources: list[Source], notebook_file: Path, html_file: Path
 ) -> str:
+    resources = "\n".join(f"  - {source.path}: {source.usage}" for source in sources)
     return (
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` "
         f"and its Marimo Studio HTML view `{html_file}`. You should not edit other files.\n"
-        f"Try to keep logic in the notebook and layout/styling in the HTML view.\n"
-        f"Use English for code and Norwegian for output.\n"
-        f"Avoid implementing large amounts of logic and data processing; prefer a thin layer "
-        f"over existing SSB packages.\n"
-        f"The following is the list of available resources and when/how they should be used. "
-        f"Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
-        f"{'\n'.join(f'  - {source.path}: {source.usage}' for source in sources)}\n"
-        f"Based on your findings, use the question tools to clarify the user's requirements, "
-        f"e.g. which UI components they want to use or how they want to use the Python packages."
+        "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
+        "Always use marimo-pair when developing the notebook, and inspect for errors.\n"
+        "You must *not* test by changing the user's real data.\n"
+        "Use English for code and Norwegian for output.\n"
+        "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.\n"
+        "The following is the list of available resources and when/how they should be used.\n"
+        f"{resources}\n"
+        "Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
+        "Based on your findings, use the question tools to clarify the user's requirements, "
+        "e.g. which UI components they want to use or how they want to use the Python packages.\n"
     )
 
 
