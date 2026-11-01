@@ -208,7 +208,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
         ),
         Source(
             marimo_pair,
-            "Use this skill to develop the notebook. It is not necessary to discover Marimo servers; the Marimo server is available at MARIMO_SERVER.",
+            f"Use this skill to develop the notebook. It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADRESS}.",
         ),
         Source(
             Path(notebook_python_packages),
