@@ -161,7 +161,7 @@ def start_agent(agent_session: AgentSession) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
     sandbox = Sandbox(
-        fs_readable=[str(home), str(opencode_path)],
+        fs_readable=[str(home), "/nix/store", str(opencode_path)],
         fs_writable=[
             str(agent_session.writeable_directory),
             *(str(path) for path in opencode_writable_paths),
