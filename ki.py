@@ -51,7 +51,7 @@ def main() -> None:
     notebook_file = find_active_notebook()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
-    
+
     sources = get_sources()
     instructions = get_intructions(sources)
     context = generate_context(notebook_file, html_file)
@@ -109,12 +109,11 @@ def get_sources() -> list[Source]:
 
 def get_intructions(sources: list[Source]) -> list[str]:
     instructions = [
-        "Develop the reactive Marimo application and its Marimo Studio HTML view.",
-        "Before making changes, explain the change and ask questions when requirements are unclear.",
-        "Do not edit the notebook directly; use the marimo-pair execute-code script for notebook edits.",
-        "Before using packages, read their APIs directly from the notebook environment's site-packages.",
+        "Develop the reactive Marimo application and its Marimo Studio html view.",
+        "In general you should only use the marimo-pair execute-code script for developing the notebook. Direct writes to the notebook  only be done for small fixes and verified with `uv run marimo check APP_FILE`.", #TODO replace with actual app name
         "Use English for code and Norwegian for output.",
-        "Prefer a thin interactive layer over existing SSB packages and avoid extensive testing.",
+        "Avoid implementing large amounts of logic and data-processing; prefer a thin layer over excisting SSB packages.",
+        "",
     ]
     instructions.extend(f"{source.usage} Path: {source.path}" for source in sources)
     return instructions
