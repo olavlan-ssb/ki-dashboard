@@ -157,6 +157,8 @@ def start_agent(agent_session: AgentSession) -> None:
         [
             "pi",
             "--no-context-files",
+            "--tools",
+            "bash,read,edit",
             "--system-prompt",
             agent_session.system_prompt,
             agent_session.initial_prompt,
