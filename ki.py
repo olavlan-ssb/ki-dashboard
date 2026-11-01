@@ -143,7 +143,17 @@ def start_agent(agent_session: AgentSession) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
     sandbox = Sandbox(
-        fs_readable=[str(home), "/nix/store"],
+        fs_readable=[
+            str(home),
+            "/nix/store",
+            "/bin",
+            "/usr",
+            "/lib",
+            "/lib64",
+            "/etc",
+            "/proc",
+            "/dev",
+        ],
         fs_writable=[
             str(agent_session.writeable_directory),
             str(pi_writable_path),
