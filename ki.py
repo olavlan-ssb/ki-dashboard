@@ -257,10 +257,19 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
 
 
 def get_notebook_site_packages(notebook_file: Path) -> str:
-    return run_in_marimo_session(
-        notebook_file,
-        "import sysconfig; print(sysconfig.get_path('purelib'))",
-    ).strip()
+    python = subprocess.run(
+        ["uv", "python", "find", "--script", str(notebook_file)],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    result = subprocess.run(
+        [python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return result.stdout.strip()
 
 
 def get_view(notebook_file: Path) -> Path:
