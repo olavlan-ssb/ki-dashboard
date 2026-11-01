@@ -167,7 +167,7 @@ def start_agent(agent_session: AgentSession) -> None:
             "/dev/null"
         ],
         cwd=str(agent_session.writeable_directory),
-        net_allow=[get_provider_domain()],
+        net_allow=[get_provider_domain(), MARIMO_ADRESS.removeprefix("http://")],
         extra_allow_syscalls=["sysv_ipc"],
     )
     exit_code = sandbox.run_interactive(
