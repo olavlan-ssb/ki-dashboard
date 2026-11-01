@@ -132,6 +132,10 @@ def build_prompt(agent_session: AgentSession) -> str:
     return prompt
 
 
+def get_provider_domain() -> str:
+    return "opencode.ai:443"
+
+
 def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
@@ -146,7 +150,7 @@ def start_agent(agent_session: AgentSession) -> None:
             "/tmp",
         ],
         cwd=str(agent_session.writeable_directory),
-        net_allow=[],
+        net_allow=[get_provider_domain()],
         extra_allow_syscalls=["sysv_ipc"],
     )
     exit_code = sandbox.run_interactive(
