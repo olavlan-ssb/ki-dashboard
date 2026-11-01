@@ -104,7 +104,7 @@ def main() -> None:
 
 
 def get_provider_domain() -> str:
-    return "opencode.ai:443"
+    return "opencode.ai"
 
 
 def start_agent(agent_session: AgentSession) -> None:
