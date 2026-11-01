@@ -44,7 +44,7 @@ class Source:
 @dataclass
 class AgentSession:
     sources: list[Source]
-    instructions: list[str]
+    system_prompt: list[str]
     initial_prompt: str
     writeable_directory: Path
 
@@ -56,7 +56,7 @@ def main() -> None:
     html_file = view.joinpath("index.html")
 
     sources = get_sources(notebook_file)
-    instructions = get_intructions(sources, notebook_file, html_file)
+    system_prompt = get_system_prompt(sources, notebook_file, html_file)
     welcome_message = [
         "Aktive Marimo-filer",
         f"  Notebook: {notebook_file}",
@@ -73,7 +73,7 @@ def main() -> None:
 
     initial_prompt = input("> ")
     agent_session = AgentSession(
-        sources, instructions, initial_prompt, notebook_file.parent
+        sources, system_prompt, initial_prompt, notebook_file.parent
     )
     if arguments.dry_run:
         print(build_prompt(agent_session))
@@ -82,11 +82,11 @@ def main() -> None:
 
 
 def build_prompt(agent_session: AgentSession) -> str:
-    prompt = "# Instructions\n\n"
+    prompt = "# System prompt\n\n"
     prompt += "\n".join(
-        f"{instruction}" for instruction in agent_session.instructions
+        f"{instruction}" for instruction in agent_session.system_prompt
     )
-    prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
+    prompt += f"\n\n# User prompt (respond in same language)\n\n{agent_session.initial_prompt}"
     return prompt
 
 
@@ -136,22 +136,22 @@ def get_sources(notebook_file: Path) -> list[Source]:
     ]
 
 
-def get_intructions(
+def get_system_prompt(
     sources: list[Source], notebook_file: Path, html_file: Path
 ) -> list[str]:
-    instructions = [
+    system_prompt = [
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`. You should not edit other files.",
         "Try to keep logic in the notebook and layout/styling in the HTML view.",
         "Use English for code and Norwegian for output.",
         "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.",
         "The following is the list of available resources and when/how they should be used. Do not use the shell tool to read them; only use the grep, glob and read tools.",
     ]
-    instructions.extend(f"  - {source.path}: {source.usage}" for source in sources)
-    instructions.append(
+    system_prompt.extend(f"  - {source.path}: {source.usage}" for source in sources)
+    system_prompt.append(
         "Based on your findings, use the question tools to clarify the user's requirements, e.g. which UI components they want to use or how they want to use the Python packages."
     )
 
-    return instructions
+    return system_prompt
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
@@ -178,14 +178,14 @@ def find_active_notebook() -> Path:
     return Path(path)
 
 
-def run_in_marimo_session(app_file: Path, code: str) -> str:
+def run_in_marimo_session(notebook_file: Path, code: str) -> str:
     command = [
         "bash",
         os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
         "--url",
         MARIMO_ADRESS,
         "--file",
-        str(app_file),
+        str(notebook_file),
         "-c",
         code,
     ]
@@ -195,21 +195,21 @@ def run_in_marimo_session(app_file: Path, code: str) -> str:
     return result.stdout
 
 
-def get_notebook_site_packages(app_file: Path) -> str:
+def get_notebook_site_packages(notebook_file: Path) -> str:
     return run_in_marimo_session(
-        app_file,
+        notebook_file,
         "import sysconfig; print(sysconfig.get_path('purelib'))",
     ).strip()
 
 
-def get_view(app_file: Path) -> Path:
-    return asyncio.run(_get_view(app_file))
+def get_view(notebook_file: Path) -> Path:
+    return asyncio.run(_get_view(notebook_file))
 
 
-async def _get_view(app_file: Path) -> Path:
+async def _get_view(notebook_file: Path) -> Path:
     from marimo_studio.authoring import open_workspace
 
-    workspace = open_workspace(app_file)
+    workspace = open_workspace(notebook_file)
     overview = await workspace.status()
 
     if (
