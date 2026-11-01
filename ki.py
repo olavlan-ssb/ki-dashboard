@@ -2,6 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo-studio==0.4.0",
+#     "sandlock>=0.9.0",
 # ]
 # ///
 
@@ -13,6 +14,8 @@ import subprocess
 import sys
 import urllib.request
 from typing import NoReturn, cast
+
+from sandlock import Sandbox
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -44,6 +47,7 @@ class AgentSession:
     instructions: list[str]
     context: str
     initial_prompt: str
+    writeable_directory: Path
 
 
 def main() -> None:
@@ -74,12 +78,36 @@ def main() -> None:
     print()
 
     initial_prompt = input("> ")
-    agent_session = AgentSession(sources, instructions, context, initial_prompt)
+    agent_session = AgentSession(
+        sources, instructions, context, initial_prompt, notebook_file.parent
+    )
     if arguments.dry_run:
         print(build_prompt(agent_session))
     else:
-        start_opencode(agent_session)
+        start_agent(agent_session)
 
+def build_prompt(agent_session: AgentSession) -> str:
+    prompt = "# Instructions\n\n"
+    prompt += "\n".join(
+        f"- {instruction}" for instruction in agent_session.instructions
+    )
+    prompt += f"\n\n# Context\n\n{agent_session.context}"
+    prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
+    return prompt
+
+
+def start_agent(agent_session: AgentSession) -> None:
+    sandbox = Sandbox(
+        fs_readable=[str(Path.home())],
+        fs_writable=[str(agent_session.writeable_directory)],
+        cwd=str(agent_session.writeable_directory),
+        net_allow=[],
+    )
+    exit_code = sandbox.run_interactive(
+        ["opencode", "--prompt", build_prompt(agent_session)]
+    )
+    if exit_code != 0:
+        raise subprocess.CalledProcessError(exit_code, "opencode")
 
 def get_sources() -> list[Source]:
     dapla_manual = fetch_github_docs(
@@ -130,18 +158,6 @@ def generate_context(app_file: Path, html_file: Path) -> str:
 """
 
 
-def build_prompt(agent_session: AgentSession) -> str:
-    prompt = "# Instructions\n\n"
-    prompt += "\n".join(
-        f"- {instruction}" for instruction in agent_session.instructions
-    )
-    prompt += f"\n\n# Context\n\n{agent_session.context}"
-    prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
-    return prompt
-
-
-def start_opencode(agent_session: AgentSession) -> None:
-    subprocess.run(["opencode", "--prompt", build_prompt(agent_session)], check=True)
 
 
 # TODO leave function as is for reference
