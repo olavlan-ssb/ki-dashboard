@@ -168,6 +168,7 @@ def start_agent(agent_session: AgentSession) -> None:
         ],
         cwd=str(agent_session.writeable_directory),
         net_allow=[],
+        extra_allow_syscalls=["sysv_ipc"],
     )
     exit_code = sandbox.run_interactive(
         [str(opencode_path), "--prompt", build_prompt(agent_session)]
