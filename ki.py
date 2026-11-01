@@ -88,7 +88,7 @@ def main() -> None:
 def build_prompt(agent_session: AgentSession) -> str:
     prompt = "# Instructions\n\n"
     prompt += "\n".join(
-        f"- {instruction}" for instruction in agent_session.instructions
+        f"{instruction}" for instruction in agent_session.instructions
     )
     prompt += f"\n\n# Context\n\n{agent_session.context}"
     prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
@@ -149,7 +149,6 @@ def get_intructions(
         "Try to keep logic in the notebook and layout/styling in the HTML view.",
         "Use English for code and Norwegian for output.",
         "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.",
-        "",
         "The following is the list of available resources and when/how they should be used. Do not use the shell tool to read them; only use the grep, glob and read tools.",
     ]
     instructions.extend(f"  - {source.path}: {source.usage}" for source in sources)
@@ -216,10 +215,6 @@ def get_notebook_site_packages(app_file: Path) -> str:
         app_file,
         "import sysconfig; print(sysconfig.get_path('purelib'))",
     ).strip()
-
-
-def get_marimo_python_api_docs(app_file: Path) -> str:
-    return run_in_marimo_session(app_file, "import marimo._code_mode as cm; help(cm)")
 
 
 def get_view(app_file: Path) -> Path:
