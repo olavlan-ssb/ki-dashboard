@@ -135,8 +135,9 @@ def start_agent(agent_session: AgentSession) -> None:
 
 def get_resources(notebook_file: Path) -> list[Resource]:
     notebook_python_packages: Resource = Resource(
-        Path(get_notebook_site_packages(notebook_file)),
-        ("Always read relevant API documentation here before using packages."),
+        Path.home() / ".cache" / "uv" / "environments-v2",
+        ("Always read relevant API documentation here before using packages."
+        "You must find the correct python environment.")
     )
 
     dapla_manual: Resource = Resource(
@@ -256,11 +257,6 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
     return result.stdout
 
 
-def get_notebook_site_packages(notebook_file: Path) -> str:
-    return run_in_marimo_session(
-        notebook_file,
-        "import sys; print(next(path for path in sys.path if path.endswith('site-packages'))) ",
-    ).strip()
 
 
 def get_view(notebook_file: Path) -> Path:
