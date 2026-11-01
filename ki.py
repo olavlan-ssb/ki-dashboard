@@ -54,6 +54,8 @@ class AgentSession:
 def main() -> None:
     arguments = parse_args()
     notebook_file = find_active_notebook()
+    validate_notebook_directory(notebook_file)
+    validate_github_repository()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
@@ -83,6 +85,43 @@ def main() -> None:
         print(build_prompt(agent_session))
     else:
         start_agent(agent_session)
+
+
+def validate_notebook_directory(notebook_file: Path) -> None:
+    if notebook_file.parent.name != "dashboards":
+        print(
+            "Notebook-filen må ligge i en mappe som heter \"dashboards\". "
+            "Agenten kommer til å få automatisk skrivetilgang til filer i denne mappen (men ikke utenfor).",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
+
+
+def validate_github_repository() -> None:
+    try:
+        repository = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return
+
+    status = subprocess.run(
+        ["git", "status", "--porcelain"],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if status:
+        print(
+            "Repoet har endringer som ikke er commited. Disse må comittes før agenten kan starte. "
+            "Agenten kommer til å få automatisk skrivetilgang og prosjektets nåværende tilstand må derfor kunne gjenopprettes",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
 
 def build_prompt(agent_session: AgentSession) -> str:
