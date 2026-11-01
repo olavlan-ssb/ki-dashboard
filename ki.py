@@ -262,8 +262,6 @@ def get_notebook_site_packages(notebook_file: Path) -> str:
             "uv",
             "python",
             "find",
-            "--no-project",
-            "--resolve-links",
             "--script",
             str(notebook_file),
         ],
