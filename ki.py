@@ -325,6 +325,7 @@ def get_ssb_style_block() -> str:
 </style>"""
 
 
+
 def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
     destination = Path.home() / ".cache" / repo_name
     if destination.is_dir():
