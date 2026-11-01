@@ -8,6 +8,7 @@
 
 import argparse
 import asyncio
+import curses
 import json
 import os
 import subprocess
@@ -59,7 +60,9 @@ def main() -> None:
     notebooks = find_active_notebooks()
     if not notebooks:
         exit_because_notebook_session_is_not_active()
-    notebook_file = notebooks[0]
+    notebook_file = (
+        notebooks[0] if len(notebooks) == 1 else choose_notebook(notebooks)
+    )
     validate_github_repository()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
@@ -346,6 +349,35 @@ def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
         )
         shutil.copytree(Path(temporary) / docs_path, destination, dirs_exist_ok=True)
     return destination
+
+
+def choose_notebook(notebooks: list[Path]) -> Path:
+    selected = curses.wrapper(_choose_notebook, notebooks)
+    return notebooks[selected]
+
+
+def _choose_notebook(screen: curses.window, notebooks: list[Path]) -> int:
+    curses.curs_set(0)
+    curses.start_color()
+    curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+    selected = 0
+
+    while True:
+        screen.clear()
+        screen.addstr("Velg Marimo-fil:\n\n")
+        for index, notebook in enumerate(notebooks):
+            prefix = "❯ " if index == selected else "  "
+            style = curses.color_pair(1) if index == selected else 0
+            screen.addstr(f"{prefix}{notebook}\n", style)
+        screen.addstr("\nBruk ↑/↓ og trykk Enter.")
+        key = screen.getch()
+
+        if key == curses.KEY_UP:
+            selected = (selected - 1) % len(notebooks)
+        elif key == curses.KEY_DOWN:
+            selected = (selected + 1) % len(notebooks)
+        elif key in (curses.KEY_ENTER, 10, 13):
+            return selected
 
 
 if __name__ == "__main__":
