@@ -136,7 +136,18 @@ def build_prompt(agent_session: AgentSession) -> str:
 
 def start_agent(agent_session: AgentSession) -> None:
     sandbox = Sandbox(
-        fs_readable=[str(Path.home())],
+        fs_readable=[
+            str(Path.home()),
+            "/bin",
+            "/dev",
+            "/etc",
+            "/lib",
+            "/lib64",
+            "/nix/store",
+            "/proc",
+            "/run",
+            "/usr",
+        ],
         fs_writable=[str(agent_session.writeable_directory)],
         cwd=str(agent_session.writeable_directory),
         net_allow=[],
