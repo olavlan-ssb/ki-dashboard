@@ -70,7 +70,10 @@ def main() -> None:
         *(f"    {source.path}" for source in sources),
         "",
         "Relvant kontekst er lastet.",
-        "Det anbefales å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon.",
+        "",
+        f"Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, slik at agenten får rask tilgang til relevant pakkedokumentasjon.",
+        "",
+        "Når agenten er ferdig kan du se alle endringene med `git diff`. Hvis du vil angre agentens endringer kan dette gjøres med `git restore .`",
         "",
         f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}",
         "",
@@ -117,8 +120,8 @@ def validate_github_repository() -> None:
     ).stdout
     if status:
         print(
-            "Repoet har endringer som ikke er commited. Disse må comittes før agenten kan starte. "
-            "Agenten kommer til å få automatisk skrivetilgang og prosjektets nåværende tilstand må derfor kunne gjenopprettes",
+            "Repoet har endringer som ikke er commited. Disse må comittes før agenten kan starte.\n"
+            "Agenten kommer til å få automatisk skrivetilgang og prosjektets nåværende tilstand må derfor kunne gjenopprettes.",
             file=sys.stderr,
         )
         raise SystemExit(1)
