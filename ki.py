@@ -13,10 +13,9 @@ import os
 import subprocess
 import sys
 import urllib.request
-from typing import NoReturn, cast
-
 from dataclasses import dataclass
 from pathlib import Path
+from typing import NoReturn
 
 IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
 MARIMO_ADDRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
