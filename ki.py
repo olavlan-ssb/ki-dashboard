@@ -55,7 +55,8 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
-    validate_github_repository()
+    if not arguments.dry_run:
+        validate_github_repository()
     notebooks = find_active_notebooks()
     if not notebooks:
         exit_because_no_valid_marimo_session()
@@ -207,8 +208,7 @@ def get_system_prompt(
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
-        "Based on your findings, use the question tools to clarify the user's requirements, "
-        "e.g. which UI components they want to use or how they want to use the Python packages.\n"
+        "Based on your findings, use the question tool to clarify the user's requirements before implementing."
     )
 
 
@@ -280,7 +280,7 @@ async def _get_view(notebook_file: Path) -> Path:
             return Path(inspection.root)
 
     name = "dashboard"
-    print(f"Oppretter nytt dashboard-view '{name}.html'...")
+    print("Oppretter nytt view...")
     view = await workspace.create_view(
         name,
         starter="marimo-studio/vanilla:default",
@@ -296,6 +296,7 @@ async def _get_view(notebook_file: Path) -> Path:
         )
         await view.write("index.html", content, expected_revision=document.revision)
     await view.build()
+    print("Et nytt view 'dashboard.html' er opprettet. Oppdater siden for å se viewet.")
     return Path((await view.inspect()).root)
 
 
