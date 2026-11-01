@@ -105,7 +105,7 @@ def validate_github_repository() -> None:
         return
 
     status = subprocess.run(
-        ["git", "status", "--porcelain"],
+        ["git", "status", "--porcelain", "--untracked-files=no"],
         cwd=repository,
         capture_output=True,
         text=True,
@@ -136,8 +136,10 @@ def start_agent(agent_session: AgentSession) -> None:
 def get_resources(notebook_file: Path) -> list[Resource]:
     notebook_python_packages: Resource = Resource(
         Path.home() / ".cache" / "uv" / "environments-v2",
-        ("Always read relevant API documentation here before using packages."
-        "You must find the correct python environment.")
+        (
+            "Always read relevant API documentation here before using packages. "
+            "You must find the correct Python environment."
+        ),
     )
 
     dapla_manual: Resource = Resource(
@@ -170,7 +172,8 @@ def get_resources(notebook_file: Path) -> list[Resource]:
 
     marimo_notebook: Resource = Resource(
         Path.home() / ".agents" / "skills" / "marimo-notebook",
-        (    "Use this skill instead of marimo-pair when you only need to make minor changes,"
+        (
+            "Use this skill instead of marimo-pair when you only need to make minor changes,"
             "that can be made through direct edits to the notebook. "
             "Also use this skill to understand how Marimo outputs work. "
             "Summary: always put the output in a variable and use that as the last expression of the cell."
@@ -257,8 +260,6 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
     return result.stdout
 
 
-
-
 def get_view(notebook_file: Path) -> Path:
     return asyncio.run(_get_view(notebook_file))
 
@@ -319,7 +320,6 @@ def get_ssb_style_block() -> str:
   --marimo-cell-padding: var(--ds-size-4);
 }
 </style>"""
-
 
 
 def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
