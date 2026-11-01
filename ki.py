@@ -158,6 +158,7 @@ def start_agent(agent_session: AgentSession) -> None:
             str(agent_session.writeable_directory),
             str(pi_writable_path),
             "/tmp",
+            "/dev/null"
         ],
         cwd=str(agent_session.writeable_directory),
         net_allow=[get_provider_domain()],
