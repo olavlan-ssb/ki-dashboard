@@ -22,6 +22,8 @@ from pathlib import Path
 IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
 MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 
+GREEN_TEXT_START = "\033[32m"
+GREEN_TEXT_STOP = "\033[0m"
 
 @dataclass
 class Arguments:
@@ -65,13 +67,15 @@ def main() -> None:
         "Kilder lastet",
         *(f"    {source.path}" for source in sources),
         "",
+        "Relvant kontekst er lastet.",
         "Det anbefales å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon.",
-        "Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).",
+        "",
+        f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}",
         "",
     ]
     print("\n".join(welcome_message))
 
-    initial_prompt = input("> ")
+    initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
     agent_session = AgentSession(
         sources, system_prompt, initial_prompt, notebook_file.parent
     )
