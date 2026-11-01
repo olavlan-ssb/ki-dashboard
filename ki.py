@@ -139,6 +139,11 @@ def get_provider_domain() -> str:
 def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
+    marimo_servers_path = (
+        Path(os.environ.get("XDG_STATE_HOME", home / ".local" / "state"))
+        / "marimo"
+        / "servers"
+    )
     for path in [pi_writable_path]:
         path.mkdir(parents=True, exist_ok=True)
 
@@ -157,6 +162,7 @@ def start_agent(agent_session: AgentSession) -> None:
         fs_writable=[
             str(agent_session.writeable_directory),
             str(pi_writable_path),
+            str(marimo_servers_path),
             "/tmp",
             "/dev/null"
         ],
