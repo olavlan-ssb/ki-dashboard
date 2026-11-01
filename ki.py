@@ -156,6 +156,7 @@ def start_agent(agent_session: AgentSession) -> None:
     exit_code = sandbox.run_interactive(
         [
             "pi",
+            "--no-context-files",
             "--system-prompt",
             agent_session.system_prompt,
             agent_session.initial_prompt,
