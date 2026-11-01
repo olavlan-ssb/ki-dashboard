@@ -154,16 +154,15 @@ def get_resources(notebook_file: Path) -> list[Resource]:
         (
             "Read relevant documentation from here before developing the html view. "
             "Always prefer using designsystemet components and design tokens instead of hardcoded css values. "
-            "In particular, SSB theming come out of the box with the existing css imports."
+            "In particular, SSB theming come out of the box with the existing css imports (don't remove these)."
         ),
     )
-
 
     marimo_pair: Resource = Resource(
         Path.home() / ".agents" / "skills" / "marimo-pair",
         (
-            "Use this skill to develop the notebook, instead of making direct edits to the file."
-            f"It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADDRESS}."
+            "Use this skill to develop the notebook, instead of making direct edits to the file. "
+            f"It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADDRESS}. "
             "You must give the user a short explanation before each time you use the marimo-pair script."
         ),
     )
@@ -171,8 +170,8 @@ def get_resources(notebook_file: Path) -> list[Resource]:
     marimo_notebook: Resource = Resource(
         Path.home() / ".agents" / "skills" / "marimo-notebook",
         (    "Use this skill instead of marimo-pair when you only need to make minor changes,"
-            "that can be made through direct edits to the notebook."
-            "When using marimo-pair, use this skill to understand how Marimo outputs work. "
+            "that can be made through direct edits to the notebook. "
+            "Also use this skill to understand how Marimo outputs work. "
             "Summary: always put the output in a variable and use that as the last expression of the cell."
         ),
     )
@@ -196,10 +195,11 @@ def get_system_prompt(
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` "
         f"and its Marimo Studio HTML view `{html_file}`. You should not edit other files.\n"
         "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
-        "Always use marimo-pair when developing the notebook, and inspect for errors.\n"
+        "Always give meaningful names to cells and make sure the html view is in sync.\n"
+        "Use marimo-pair when developing the notebook, and inspect for errors before you finish.\n"
         "You must *not* test by changing the user's real data.\n"
         "Use English for code and Norwegian for user-facing output.\n"
-        "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.\n"
+        "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
