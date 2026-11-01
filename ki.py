@@ -148,7 +148,6 @@ def start_agent(agent_session: AgentSession) -> None:
             "/nix/store",
             "/bin",
             "/usr",
-            "/lib",
             "/lib64",
             "/etc",
             "/proc",
