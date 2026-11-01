@@ -97,32 +97,7 @@ def main() -> None:
         start_agent(agent_session)
 
 
-def validate_github_repository() -> None:
-    try:
-        repository = subprocess.run(
-            ["git", "rev-parse", "--show-toplevel"],
-            capture_output=True,
-            text=True,
-            check=True,
-        ).stdout.strip()
-    except (OSError, subprocess.CalledProcessError):
-        return
 
-    status = subprocess.run(
-        ["git", "status", "--porcelain", "--untracked-files=no"],
-        cwd=repository,
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout
-    if status:
-        print(
-            "Repoet har endringer som ikke er committet. Disse må committes før agenten kan starte.\n"
-            "Agenten vil endre notebooken gjennom kommandoer som kan være vanskelige å lese.\n"
-            "Derfor må prosjektets nåværende tilstand kunne gjenopprettes.\n",
-            file=sys.stderr,
-        )
-        raise SystemExit(1)
 
 
 def build_prompt(agent_session: AgentSession) -> str:
@@ -308,6 +283,32 @@ def get_ssb_style_block() -> str:
 }
 </style>"""
 
+def validate_github_repository() -> None:
+    try:
+        repository = subprocess.run(
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=True,
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError):
+        return
+
+    status = subprocess.run(
+        ["git", "status", "--porcelain", "--untracked-files=no"],
+        cwd=repository,
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if status:
+        print(
+            "Repoet har endringer som ikke er committet. Disse må committes før agenten kan starte.\n"
+            "Agenten vil endre notebooken gjennom kommandoer som kan være vanskelige å lese.\n"
+            "Derfor må prosjektets nåværende tilstand kunne gjenopprettes.\n",
+            file=sys.stderr,
+        )
+        raise SystemExit(1)
 
 def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
     destination = Path.home() / ".cache" / repo_name
