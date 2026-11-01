@@ -177,20 +177,12 @@ def get_resources(notebook_file: Path) -> list[Resource]:
         ),
     )
 
-    marimo_studio: Resource = Resource(
-        fetch_github_docs("marimo-team/marimo-studio", "docs"),
-        (
-            "Read the relevant documentation here to understand how Marimo Studio works when developing the HTML view. "
-        ),
-    )
-
     return [
         notebook_python_packages,
         dapla_manual,
         designsystemet,
         marimo_pair,
         marimo_notebook,
-        marimo_studio,
     ]
 
 
