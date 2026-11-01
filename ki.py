@@ -56,7 +56,10 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
-    notebook_file = find_active_notebooks()[0]
+    notebooks = find_active_notebooks()
+    if not notebooks:
+        exit_because_notebook_session_is_not_active()
+    notebook_file = notebooks[0]
     validate_github_repository()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
@@ -221,8 +224,6 @@ def find_active_notebooks() -> list[Path]:
         and Path(session["path"]).is_file()
         and Path(session["path"]).parent.name == "dashboards"
     ]
-    if not notebooks:
-        exit_because_notebook_session_is_not_active()
     return notebooks
 
 
