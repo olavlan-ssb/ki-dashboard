@@ -57,13 +57,17 @@ def main() -> None:
     if not arguments.dry_run:
         validate_github_repository()
     notebooks = find_active_notebooks()
-    if not notebooks:
+    notebook_file = (
         exit_because_no_valid_marimo_session()
-    notebook_file = notebooks[0] if len(notebooks) == 1 else choose_notebook(notebooks)
+        if not notebooks
+        else notebooks[0]
+        if len(notebooks) == 1
+        else choose_notebook(notebooks)
+    )
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
-    resources = get_resources(notebook_file)
+    resources = get_resources()
     system_prompt = get_system_prompt(resources, notebook_file, html_file)
     print(
         f"\nAktive Marimo-filer\n"
@@ -133,7 +137,7 @@ def start_agent(agent_session: AgentSession) -> None:
     subprocess.run(command, cwd=agent_session.writeable_directory, check=True)
 
 
-def get_resources(notebook_file: Path) -> list[Resource]:
+def get_resources() -> list[Resource]:
     notebook_python_packages: Resource = Resource(
         Path.home() / ".cache" / "uv" / "environments-v2",
         (
@@ -240,23 +244,6 @@ def find_active_notebooks() -> list[Path]:
         and Path(session["path"]).parent.name == "dashboards"
     ]
     return notebooks
-
-
-def run_in_marimo_session(notebook_file: Path, code: str) -> str:
-    command = [
-        "bash",
-        os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
-        "--url",
-        MARIMO_ADDRESS,
-        "--file",
-        str(notebook_file),
-        "-c",
-        code,
-    ]
-    result = subprocess.run(command, capture_output=True, text=True)
-    if result.returncode != 0:
-        exit_because_no_valid_marimo_session()
-    return result.stdout
 
 
 def get_view(notebook_file: Path) -> Path:
