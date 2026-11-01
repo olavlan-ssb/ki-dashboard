@@ -54,7 +54,7 @@ def main() -> None:
     
     sources = get_sources()
     instructions = get_intructions(sources)
-    context = get_context(notebook_file, html_file)
+    context = generate_context(notebook_file, html_file)
 
     print("Aktive Marimo-filer")
     print(f"  Notebook: {notebook_file}")
@@ -120,7 +120,7 @@ def get_intructions(sources: list[Source]) -> list[str]:
     return instructions
 
 
-def get_context(app_file: Path, html_file: Path) -> str:
+def generate_context(app_file: Path, html_file: Path) -> str:
     return f"""## Current Marimo notebook ({app_file})
 
 {app_file.read_text(encoding="utf-8")}
