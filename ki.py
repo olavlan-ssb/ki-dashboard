@@ -24,11 +24,13 @@ MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 class Arguments:
     dry_run: bool
 
+
 def parse_args() -> Arguments:
     parser = argparse.ArgumentParser()
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()
     return Arguments(dry_run=args.dry_run)
+
 
 @dataclass
 class Source:
@@ -49,7 +51,37 @@ def main() -> None:
     notebook_file = find_active_notebook()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
+    
+    sources = get_sources()
+    instructions = get_intructions(sources)
+    context = get_context(notebook_file, html_file)
 
+    print("Aktive Marimo-filer")
+    print(f"  Notebook: {notebook_file}")
+    print(f"  View:     {html_file}")
+    print()
+    print("Kilder lastet")
+    for source in sources:
+        print(f"    {source.path}")
+    print()
+    print("Relevant kontekst er lastet.")
+    print(
+        "Husk at det er lurt å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon."
+    )
+    print(
+        "Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte)."
+    )
+    print()
+
+    initial_prompt = input("> ")
+    agent_session = AgentSession(sources, instructions, context, initial_prompt)
+    if arguments.dry_run:
+        print(build_prompt(agent_session))
+    else:
+        start_opencode(agent_session)
+
+
+def get_sources() -> list[Source]:
     dapla_manual = fetch_github_docs(
         "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
     )
@@ -57,8 +89,11 @@ def main() -> None:
     marimo_notebook = Path.home() / ".agents" / "skills" / "marimo-notebook"
     marimo_pair = Path.home() / ".agents" / "skills" / "marimo-pair"
     notebook_python_packages = get_notebook_site_packages(notebook_file)
-    sources: list[Source] = [
-        Source(dapla_manual, "Always read relevant documentation from here before developing anything."),
+    return [
+        Source(
+            dapla_manual,
+            "Always read relevant documentation from here before developing anything.",
+        ),
         Source(
             designsystemet,
             "Read relevant documentation from here before developing the html view.",
@@ -70,29 +105,6 @@ def main() -> None:
             "Always read relevant API documentation here before using packages.",
         ),
     ]
-
-    instructions = get_intructions(sources)
-    context = get_context(notebook_file, html_file)
-
-    print("Aktive Marimo-filer")
-    print(f"  Notebook: {notebook_file}")
-    print(f"  View:     {html_file}")
-    print()
-    print("Kilder lastet")
-    for source in sources:
-        print(f"  - {source.path}")
-    print()
-    print("Relevant kontekst er lastet.")
-    print("Husk at det er lurt å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon.")
-    print("Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).")
-    print()
-
-    initial_prompt = input("> ")
-    agent_session = AgentSession(sources, instructions, context, initial_prompt)
-    if arguments.dry_run:
-        print(build_prompt(agent_session))
-    else:
-        start_opencode(agent_session)
 
 
 def get_intructions(sources: list[Source]) -> list[str]:
@@ -121,7 +133,9 @@ def get_context(app_file: Path, html_file: Path) -> str:
 
 def build_prompt(agent_session: AgentSession) -> str:
     prompt = "# Instructions\n\n"
-    prompt += "\n".join(f"- {instruction}" for instruction in agent_session.instructions)
+    prompt += "\n".join(
+        f"- {instruction}" for instruction in agent_session.instructions
+    )
     prompt += f"\n\n# Context\n\n{agent_session.context}"
     prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
     return prompt
@@ -129,6 +143,7 @@ def build_prompt(agent_session: AgentSession) -> str:
 
 def start_opencode(agent_session: AgentSession) -> None:
     subprocess.run(["opencode", "--prompt", build_prompt(agent_session)], check=True)
+
 
 # TODO leave function as is for reference
 def generate_notebook_context(arguments: Arguments, app_file: Path) -> str:
@@ -234,8 +249,6 @@ Main prompt (respond in the same language):
 *{arguments.prompt}*
 
     """
-
-
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
