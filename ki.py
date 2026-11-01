@@ -179,8 +179,12 @@ def get_sources(notebook_file: Path) -> list[Source]:
         ),
     )
 
-    #TODO fetch github docs from marimo-team/marimo-studio, path "docs"
-    #say that it can be used to understand how marimo-studio works, but it's generally not necessary
+    marimo_studio: Source = Source(
+        fetch_github_docs("marimo-team/marimo-studio", "docs"),
+        (
+            "Read relevant documentation from here to understand how Marimo Studio works when developing the html view. "
+        ),
+    )
 
     return [
         notebook_python_packages,
@@ -188,6 +192,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
         designsystemet,
         marimo_pair,
         marimo_notebook,
+        marimo_studio,
     ]
 
 
