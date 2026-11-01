@@ -135,19 +135,20 @@ def build_prompt(agent_session: AgentSession) -> str:
 
 
 def start_agent(agent_session: AgentSession) -> None:
+    readable_paths = [
+        Path.home(),
+        Path("/bin"),
+        Path("/dev"),
+        Path("/etc"),
+        Path("/lib"),
+        Path("/lib64"),
+        Path("/nix/store"),
+        Path("/proc"),
+        Path("/run"),
+        Path("/usr"),
+    ]
     sandbox = Sandbox(
-        fs_readable=[
-            str(Path.home()),
-            "/bin",
-            "/dev",
-            "/etc",
-            "/lib",
-            "/lib64",
-            "/nix/store",
-            "/proc",
-            "/run",
-            "/usr",
-        ],
+        fs_readable=[str(path) for path in readable_paths if path.exists()],
         fs_writable=[str(agent_session.writeable_directory)],
         cwd=str(agent_session.writeable_directory),
         net_allow=[],
