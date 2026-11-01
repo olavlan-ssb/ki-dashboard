@@ -148,12 +148,12 @@ def get_opencode_writeable_paths() -> list[Path]:
 
 
 def start_agent(agent_session: AgentSession) -> None:
-    opencode_result = subprocess.run(
-        ["which", "opencode"], capture_output=True, text=True, check=False
+    pi_result = subprocess.run(
+        ["which", "pi"], capture_output=True, text=True, check=False
     )
-    if opencode_result.returncode != 0 or not opencode_result.stdout.strip():
-        raise FileNotFoundError("Could not find opencode on PATH")
-    opencode_path = Path(opencode_result.stdout.strip()).resolve()
+    if pi_result.returncode != 0 or not pi_result.stdout.strip():
+        raise FileNotFoundError("Could not find pi on PATH")
+    pi_path = Path(pi_result.stdout.strip()).resolve()
 
     home = Path.home()
     opencode_writable_paths = get_opencode_writeable_paths()
@@ -161,7 +161,7 @@ def start_agent(agent_session: AgentSession) -> None:
         path.mkdir(parents=True, exist_ok=True)
 
     sandbox = Sandbox(
-        fs_readable=[str(home), "/nix/store", str(opencode_path)],
+        fs_readable=[str(home), "/nix/store", str(pi_path)],
         fs_writable=[
             str(agent_session.writeable_directory),
             *(str(path) for path in opencode_writable_paths),
@@ -171,10 +171,15 @@ def start_agent(agent_session: AgentSession) -> None:
         extra_allow_syscalls=["sysv_ipc"],
     )
     exit_code = sandbox.run_interactive(
-        [str(opencode_path), "--prompt", build_prompt(agent_session)]
+        [
+            str(pi_path),
+            "--system-prompt",
+            agent_session.system_prompt,
+            agent_session.initial_prompt,
+        ]
     )
     if exit_code != 0:
-        raise subprocess.CalledProcessError(exit_code, "opencode")
+        raise subprocess.CalledProcessError(exit_code, "pi")
 
 
 def get_sources(notebook_file: Path) -> list[Source]:
