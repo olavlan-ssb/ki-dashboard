@@ -45,7 +45,6 @@ class Source:
 class AgentSession:
     sources: list[Source]
     instructions: list[str]
-    context: str
     initial_prompt: str
     writeable_directory: Path
 
@@ -58,8 +57,6 @@ def main() -> None:
 
     sources = get_sources(notebook_file)
     instructions = get_intructions(sources, notebook_file, html_file)
-    context = generate_context(notebook_file, html_file)
-
     welcome_message = [
         "Aktive Marimo-filer",
         f"  Notebook: {notebook_file}",
@@ -68,7 +65,6 @@ def main() -> None:
         "Kilder lastet",
         *(f"    {source.path}" for source in sources),
         "",
-        "Relevant kontekst er lastet.",
         "Det anbefales å installere relevante Python-pakker i notebooken, da får agenten rask tilgang til relevant pakkedokumentasjon.",
         "Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).",
         "",
@@ -77,7 +73,7 @@ def main() -> None:
 
     initial_prompt = input("> ")
     agent_session = AgentSession(
-        sources, instructions, context, initial_prompt, notebook_file.parent
+        sources, instructions, initial_prompt, notebook_file.parent
     )
     if arguments.dry_run:
         print(build_prompt(agent_session))
@@ -90,7 +86,6 @@ def build_prompt(agent_session: AgentSession) -> str:
     prompt += "\n".join(
         f"{instruction}" for instruction in agent_session.instructions
     )
-    prompt += f"\n\n# Context\n\n{agent_session.context}"
     prompt += f"\n\n# User request\n\n{agent_session.initial_prompt}"
     return prompt
 
@@ -120,7 +115,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
     return [
         Source(
             dapla_manual,
-            "Always read relevant documentation from here before developing the notebook and using packages. It provides SSB-specific documentation that should be followed.",
+            "Always read relevant documentation from here before developing the notebook and using packages. It provides SSB-specific guidelines that should be followed.",
         ),
         Source(
             designsystemet,
@@ -145,7 +140,7 @@ def get_intructions(
     sources: list[Source], notebook_file: Path, html_file: Path
 ) -> list[str]:
     instructions = [
-        f"Your job is to help develop the reactive Marimo application {notebook_file} and its Marimo Studio HTML view {html_file}.",
+        f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`. You should not edit other files.",
         "Try to keep logic in the notebook and layout/styling in the HTML view.",
         "Use English for code and Norwegian for output.",
         "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.",
@@ -158,16 +153,6 @@ def get_intructions(
 
     return instructions
 
-
-def generate_context(app_file: Path, html_file: Path) -> str:
-    return f"""## Current Marimo notebook ({app_file})
-
-{app_file.read_text(encoding="utf-8")}
-
-## Current HTML view ({html_file})
-
-{html_file.read_text(encoding="utf-8")}
-"""
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
     print("Notebook-filen må være åpen i Marimo-grensesnittet.", file=sys.stderr)
