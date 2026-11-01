@@ -132,39 +132,17 @@ def build_prompt(agent_session: AgentSession) -> str:
     return prompt
 
 
-def get_opencode_writeable_paths() -> list[Path]:
-    home = Path.home()
-    xdg_data = Path(os.environ.get("XDG_DATA_HOME", home / ".local/share"))
-    xdg_cache = Path(os.environ.get("XDG_CACHE_HOME", home / ".cache"))
-    xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", home / ".config"))
-    xdg_state = Path(os.environ.get("XDG_STATE_HOME", home / ".local/state"))
-    return [
-        xdg_data / "opencode",
-        xdg_cache / "opencode",
-        xdg_config / "opencode",
-        xdg_state / "opencode",
-        Path("/tmp/opencode"),
-    ]
-
-
 def start_agent(agent_session: AgentSession) -> None:
-    pi_result = subprocess.run(
-        ["which", "pi"], capture_output=True, text=True, check=False
-    )
-    if pi_result.returncode != 0 or not pi_result.stdout.strip():
-        raise FileNotFoundError("Could not find pi on PATH")
-    pi_path = Path(pi_result.stdout.strip()).resolve()
-
     home = Path.home()
-    opencode_writable_paths = get_opencode_writeable_paths()
-    for path in opencode_writable_paths:
+    pi_writable_path = home / ".pi" / "agent"
+    for path in [pi_writable_path]:
         path.mkdir(parents=True, exist_ok=True)
 
     sandbox = Sandbox(
-        fs_readable=[str(home), "/nix/store", str(pi_path)],
+        fs_readable=[str(home), "/nix/store"],
         fs_writable=[
             str(agent_session.writeable_directory),
-            *(str(path) for path in opencode_writable_paths),
+            str(pi_writable_path),
         ],
         cwd=str(agent_session.writeable_directory),
         net_allow=[],
@@ -172,7 +150,7 @@ def start_agent(agent_session: AgentSession) -> None:
     )
     exit_code = sandbox.run_interactive(
         [
-            str(pi_path),
+            "pi",
             "--system-prompt",
             agent_session.system_prompt,
             agent_session.initial_prompt,
