@@ -57,7 +57,7 @@ def main() -> None:
     html_file = view.joinpath("index.html")
 
     sources = get_sources(notebook_file)
-    instructions = get_intructions(sources)
+    instructions = get_intructions(sources, notebook_file, html_file)
     context = generate_context(notebook_file, html_file)
 
     welcome_message = [
@@ -141,17 +141,19 @@ def get_sources(notebook_file: Path) -> list[Source]:
     ]
 
 
-def get_intructions(sources: list[Source]) -> list[str]:
+def get_intructions(
+    sources: list[Source], notebook_file: Path, html_file: Path
+) -> list[str]:
     instructions = [
-        f"Your job is to help develop the reactive Marimo application {} and its Marimo Studio html view {}.", #TODO add file names
-        "Try to keep logic in the notebook and layout/styling in the html view."
+        f"Your job is to help develop the reactive Marimo application {notebook_file} and its Marimo Studio HTML view {html_file}.",
+        "Try to keep logic in the notebook and layout/styling in the HTML view.",
         "Use English for code and Norwegian for output.",
-        "Avoid implementing large amounts of logic and data-processing; prefer a thin layer over excisting SSB packages.",
+        "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.",
         "",
-        "The following is the list of available reasources and when/how they should be used. Do not use the shell tool to read them; only use the grep, glob and read tools.",
+        "The following is the list of available resources and when/how they should be used. Do not use the shell tool to read them; only use the grep, glob and read tools.",
     ]
     instructions.extend(f"  - {source.path}: {source.usage}" for source in sources)
-    instructions.extend(
+    instructions.append(
         "Based on your findings, use the question tools to clarify the user's requirements, e.g. which UI components they want to use or how they want to use the Python packages."
     )
 
