@@ -19,7 +19,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
-MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
+MARIMO_ADDRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 
 GREEN_TEXT_START = "\033[32m"
 GREEN_TEXT_STOP = "\033[39m"
@@ -70,17 +70,17 @@ def main() -> None:
         f"  Notebook: {notebook_file}\n"
         f"  View:     {html_file}\n"
         f"\n"
-        f"Relvant kontekst er lastet.\n"
+        f"Relevant kontekst er lastet inn.\n"
         f"\n"
         f"{ITALIC_TEXT_START}Det anbefales å installere relevante Python-pakker i notebooken på forhånd, "
-        f"slik at agenten får rask tilgang til relevant pakkedokumentasjon.\n"
-        f"Agenten vil endre notebooken gjennom kommandoer som kan være vanskelig å lese.\n",
-        f"Når agenten er ferdig kan du se alle endringene med kommandoen "
+        f"slik at agenten får rask tilgang til pakkedokumentasjon.\n"
+        f"Agenten vil endre notebooken gjennom kommandoer som kan være vanskelige å lese.\n"
+        f"Når agenten er ferdig, kan du se alle endringene med kommandoen "
         f"{GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}.\n"
         f"Kommandoen {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP} "
         f"kan brukes til å angre agentens endringer.\n"
         f"\n"
-        f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}\n"
+        f"{GREEN_TEXT_START}Skriv inn hva du ønsker å få gjort, og trykk Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}\n"
     )
 
     initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
@@ -113,9 +113,9 @@ def validate_github_repository() -> None:
     ).stdout
     if status:
         print(
-            "Repoet har endringer som ikke er commited. Disse må comittes før agenten kan starte.\n"
-            "Agenten vil endre notebooken gjennom kommandoer som kan være vanskelig å lese.\n",
-            "Derfor må prosjektets nåværende tilstand kunne gjenopprettes.",
+            "Repoet har endringer som ikke er committet. Disse må committes før agenten kan starte.\n"
+            "Agenten vil endre notebooken gjennom kommandoer som kan være vanskelige å lese.\n"
+            "Derfor må prosjektets nåværende tilstand kunne gjenopprettes.\n",
             file=sys.stderr,
         )
         raise SystemExit(1)
@@ -163,7 +163,7 @@ def get_resources(notebook_file: Path) -> list[Resource]:
         Path.home() / ".agents" / "skills" / "marimo-pair",
         (
             "Use this skill to develop the notebook, instead of making direct edits to the file."
-            f"It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADRESS}."
+            f"It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADDRESS}."
             "You must give the user a short explanation before each time you use the marimo-pair script."
         ),
     )
@@ -180,7 +180,7 @@ def get_resources(notebook_file: Path) -> list[Resource]:
     marimo_studio: Resource = Resource(
         fetch_github_docs("marimo-team/marimo-studio", "docs"),
         (
-            "Read relevant documentation from here to understand how Marimo Studio works when developing the html view. "
+            "Read the relevant documentation here to understand how Marimo Studio works when developing the HTML view. "
         ),
     )
 
@@ -206,9 +206,9 @@ def get_system_prompt(
         "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
         "Always use marimo-pair when developing the notebook, and inspect for errors.\n"
         "You must *not* test by changing the user's real data.\n"
-        "Use English for code and Norwegian for output.\n"
+        "Use English for code and Norwegian for user-facing output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.\n"
-        "The following is the list of available resources and when/how they should be used.\n"
+        "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
         "Based on your findings, use the question tools to clarify the user's requirements, "
@@ -227,7 +227,7 @@ def exit_because_no_valid_marimo_session() -> NoReturn:
 def find_active_notebooks() -> list[Path]:
     try:
         with urllib.request.urlopen(
-            f"{MARIMO_ADRESS}/api/sessions", timeout=2
+            f"{MARIMO_ADDRESS}/api/sessions", timeout=2
         ) as response:
             sessions = json.load(response)
     except Exception:
@@ -252,7 +252,7 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
         "bash",
         os.path.expanduser("~/.agents/skills/marimo-pair/scripts/execute-code.sh"),
         "--url",
-        MARIMO_ADRESS,
+        MARIMO_ADDRESS,
         "--file",
         str(notebook_file),
         "-c",
