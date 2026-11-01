@@ -57,13 +57,13 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
+    validate_github_repository()
     notebooks = find_active_notebooks()
     if not notebooks:
-        exit_because_notebook_session_is_not_active()
+        exit_because_no_valid_marimo_session()
     notebook_file = (
         notebooks[0] if len(notebooks) == 1 else choose_notebook(notebooks)
     )
-    validate_github_repository()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
@@ -198,7 +198,7 @@ def get_system_prompt(
     )
 
 
-def exit_because_notebook_session_is_not_active() -> NoReturn:
+def exit_because_no_valid_marimo_session() -> NoReturn:
     print(
         "Du må ha en Marimo-fil som er lagret i dashboards-mappa og er åpnet i Marimo-grensesnittet. "
         "Grunnen til at den må være i dashboards-mappa er at agenten får automatisk skrivetilgang til denne mappa, men ikke til andre mapper.",
@@ -214,10 +214,10 @@ def find_active_notebooks() -> list[Path]:
         ) as response:
             sessions = json.load(response)
     except Exception:
-        exit_because_notebook_session_is_not_active()
+        exit_because_no_valid_marimo_session()
 
     if not isinstance(sessions, dict):
-        exit_because_notebook_session_is_not_active()
+        exit_because_no_valid_marimo_session()
 
     notebooks = [
         Path(session["path"])
@@ -243,7 +243,7 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
     ]
     result = subprocess.run(command, capture_output=True, text=True)
     if result.returncode != 0:
-        exit_because_notebook_session_is_not_active()
+        exit_because_no_valid_marimo_session()
     return result.stdout
 
 
