@@ -146,12 +146,7 @@ def start_agent(agent_session: AgentSession) -> None:
         fs_readable=[
             str(home),
             "/nix/store",
-            "/bin",
-            "/usr",
-            "/lib64",
-            "/etc",
-            "/proc",
-            "/dev",
+            "/run",
         ],
         fs_writable=[
             str(agent_session.writeable_directory),
