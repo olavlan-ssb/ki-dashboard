@@ -72,12 +72,9 @@ def main() -> None:
         f"\n"
         f"Relvant kontekst er lastet.\n"
         f"\n"
-        f"{ITALIC_TEXT_START}Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). "
-        f"Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. "
-        f"Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. "
-        f"Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, "
+        f"{ITALIC_TEXT_START}Det anbefales å installere relevante Python-pakker i notebooken på forhånd, "
         f"slik at agenten får rask tilgang til relevant pakkedokumentasjon.\n"
-        f"\n"
+        f"Agenten vil endre notebooken gjennom kommandoer som kan være vanskelig å lese.\n",
         f"Når agenten er ferdig kan du se alle endringene med kommandoen "
         f"{GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}.\n"
         f"Kommandoen {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP} "
@@ -117,14 +114,15 @@ def validate_github_repository() -> None:
     if status:
         print(
             "Repoet har endringer som ikke er commited. Disse må comittes før agenten kan starte.\n"
-            "Agenten kommer til å få automatisk skrivetilgang og prosjektets nåværende tilstand må derfor kunne gjenopprettes.",
+            "Agenten vil endre notebooken gjennom kommandoer som kan være vanskelig å lese.\n",
+            "Derfor må prosjektets nåværende tilstand kunne gjenopprettes.",
             file=sys.stderr,
         )
         raise SystemExit(1)
 
 
 def build_prompt(agent_session: AgentSession) -> str:
-    prompt = "# System prompt\n\n"
+    prompt = "# System prompt (always follow this) \n\n"
     prompt += agent_session.system_prompt
     prompt += f"\n\n# User prompt (respond in same language)\n\n{agent_session.initial_prompt}"
     return prompt
@@ -220,8 +218,7 @@ def get_system_prompt(
 
 def exit_because_no_valid_marimo_session() -> NoReturn:
     print(
-        "Du må ha en Marimo-fil som er lagret i dashboards-mappa og er åpnet i Marimo-grensesnittet. "
-        "Grunnen til at den må være i dashboards-mappa er at agenten får automatisk skrivetilgang til denne mappa, men ikke til andre mapper.",
+        "Du må ha en Marimo-fil som er lagret i dashboards-mappa og er åpnet i Marimo-grensesnittet.",
         file=sys.stderr,
     )
     raise SystemExit(1)
