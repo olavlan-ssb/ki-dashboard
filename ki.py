@@ -56,8 +56,7 @@ class AgentSession:
 
 def main() -> None:
     arguments = parse_args()
-    notebook_file = find_active_notebook()
-    validate_notebook_directory(notebook_file)
+    notebook_file = find_active_notebooks()[0]
     validate_github_repository()
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
@@ -93,16 +92,6 @@ def main() -> None:
         print(build_prompt(agent_session))
     else:
         start_agent(agent_session)
-
-
-def validate_notebook_directory(notebook_file: Path) -> None:
-    if notebook_file.parent.name != "dashboards":
-        print(
-            'Notebook-filen må ligge i en mappe som heter "dashboards". '
-            "Agenten kommer til å få automatisk skrivetilgang til filer i denne mappen (men ikke utenfor).",
-            file=sys.stderr,
-        )
-        raise SystemExit(1)
 
 
 def validate_github_repository() -> None:
@@ -204,11 +193,15 @@ def get_system_prompt(
 
 
 def exit_because_notebook_session_is_not_active() -> NoReturn:
-    print("Notebook-filen må være åpen i Marimo-grensesnittet.", file=sys.stderr)
+    print(
+        "Du må ha en Marimo-fil som er lagret i dashboards-mappa og er åpnet i Marimo-grensesnittet. "
+        "Grunnen til at den må være i dashboards-mappa er at agenten får automatisk skrivetilgang til denne mappa, men ikke til andre mapper.",
+        file=sys.stderr,
+    )
     raise SystemExit(1)
 
 
-def find_active_notebook() -> Path:
+def find_active_notebooks() -> list[Path]:
     try:
         with urllib.request.urlopen(
             f"{MARIMO_ADRESS}/api/sessions", timeout=2
@@ -220,11 +213,17 @@ def find_active_notebook() -> Path:
     if not isinstance(sessions, dict):
         exit_because_notebook_session_is_not_active()
 
-    first = next(iter(sessions.values()), None)
-    path = first.get("path") if isinstance(first, dict) else None
-    if not isinstance(path, str) or not Path(path).is_file():
+    notebooks = [
+        Path(session["path"])
+        for session in sessions.values()
+        if isinstance(session, dict)
+        and isinstance(session.get("path"), str)
+        and Path(session["path"]).is_file()
+        and Path(session["path"]).parent.name == "dashboards"
+    ]
+    if not notebooks:
         exit_because_notebook_session_is_not_active()
-    return Path(path)
+    return notebooks
 
 
 def run_in_marimo_session(notebook_file: Path, code: str) -> str:
