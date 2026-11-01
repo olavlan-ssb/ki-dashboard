@@ -40,14 +40,14 @@ def parse_args() -> Arguments:
 
 
 @dataclass
-class Source:
+class Resource:
     path: Path
     usage: str
 
 
 @dataclass
 class AgentSession:
-    sources: list[Source]
+    resources: list[Resource]
     system_prompt: str
     initial_prompt: str
     writeable_directory: Path
@@ -63,8 +63,8 @@ def main() -> None:
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
-    sources = get_sources(notebook_file)
-    system_prompt = get_system_prompt(sources, notebook_file, html_file)
+    resources = get_resources(notebook_file)
+    system_prompt = get_system_prompt(resources, notebook_file, html_file)
     print(
         f"\nAktive Marimo-filer\n"
         f"  Notebook: {notebook_file}\n"
@@ -88,7 +88,7 @@ def main() -> None:
 
     initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
     agent_session = AgentSession(
-        sources, system_prompt, initial_prompt, notebook_file.parent
+        resources, system_prompt, initial_prompt, notebook_file.parent
     )
     if arguments.dry_run:
         print(build_prompt(agent_session))
@@ -135,13 +135,13 @@ def start_agent(agent_session: AgentSession) -> None:
     subprocess.run(command, cwd=agent_session.writeable_directory, check=True)
 
 
-def get_sources(notebook_file: Path) -> list[Source]:
-    notebook_python_packages: Source = Source(
+def get_resources(notebook_file: Path) -> list[Resource]:
+    notebook_python_packages: Resource = Resource(
         Path(get_notebook_site_packages(notebook_file)),
         ("Always read relevant API documentation here before using packages."),
     )
 
-    dapla_manual: Source = Source(
+    dapla_manual: Resource = Resource(
         fetch_github_docs(
             "statisticsnorway/dapla-manual", "dapla-manual/statistikkere"
         ),
@@ -151,7 +151,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
         ),
     )
 
-    designsystemet: Source = Source(
+    designsystemet: Resource = Resource(
         fetch_github_docs("digdir/designsystemet", "apps/www/app/content"),
         (
             "Read relevant documentation from here before developing the html view. "
@@ -161,7 +161,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
     )
 
 
-    marimo_pair: Source = Source(
+    marimo_pair: Resource = Resource(
         Path.home() / ".agents" / "skills" / "marimo-pair",
         (
             "Use this skill to develop the notebook, instead of making direct edits to the file."
@@ -170,7 +170,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
         ),
     )
 
-    marimo_notebook: Source = Source(
+    marimo_notebook: Resource = Resource(
         Path.home() / ".agents" / "skills" / "marimo-notebook",
         (    "Use this skill instead of marimo-pair when you only need to make minor changes,"
             "that can be made through direct edits to the notebook."
@@ -179,7 +179,7 @@ def get_sources(notebook_file: Path) -> list[Source]:
         ),
     )
 
-    marimo_studio: Source = Source(
+    marimo_studio: Resource = Resource(
         fetch_github_docs("marimo-team/marimo-studio", "docs"),
         (
             "Read relevant documentation from here to understand how Marimo Studio works when developing the html view. "
@@ -197,9 +197,11 @@ def get_sources(notebook_file: Path) -> list[Source]:
 
 
 def get_system_prompt(
-    sources: list[Source], notebook_file: Path, html_file: Path
+    resources: list[Resource], notebook_file: Path, html_file: Path
 ) -> str:
-    resources = "\n".join(f"  - {source.path}: {source.usage}" for source in sources)
+    resources_text = "\n".join(
+        f"  - {resource.path}: {resource.usage}" for resource in resources
+    )
     return (
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` "
         f"and its Marimo Studio HTML view `{html_file}`. You should not edit other files.\n"
@@ -209,7 +211,7 @@ def get_system_prompt(
         "Use English for code and Norwegian for output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin layer over existing SSB packages.\n"
         "The following is the list of available resources and when/how they should be used.\n"
-        f"{resources}\n"
+        f"{resources_text}\n"
         "Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
         "Based on your findings, use the question tools to clarify the user's requirements, "
         "e.g. which UI components they want to use or how they want to use the Python packages.\n"
