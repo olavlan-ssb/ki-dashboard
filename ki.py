@@ -257,28 +257,10 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
 
 
 def get_notebook_site_packages(notebook_file: Path) -> str:
-    environment = os.environ.copy()
-    environment.pop("VIRTUAL_ENV", None)
-    python = subprocess.run(
-        [
-            "uv",
-            "python",
-            "find",
-            "--script",
-            str(notebook_file),
-        ],
-        capture_output=True,
-        text=True,
-        check=True,
-        env=environment,
-    ).stdout.strip()
-    result = subprocess.run(
-        [python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
-        capture_output=True,
-        text=True,
-        check=True,
-    )
-    return result.stdout.strip()
+    return run_in_marimo_session(
+        notebook_file,
+        "import sys; print(next(path for path in sys.path if path.endswith('site-packages'))) ",
+    ).strip()
 
 
 def get_view(notebook_file: Path) -> Path:
