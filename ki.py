@@ -24,6 +24,8 @@ MARIMO_ADRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
 
 GREEN_TEXT_START = "\033[32m"
 GREEN_TEXT_STOP = "\033[0m"
+ITALIC_TEXT_START = "\033[3m"
+ITALIC_TEXT_STOP = "\033[0m"
 
 @dataclass
 class Arguments:
@@ -71,9 +73,9 @@ def main() -> None:
         "",
         "Relvant kontekst er lastet.",
         "",
-        f"Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, slik at agenten får rask tilgang til relevant pakkedokumentasjon.",
+        f"{ITALIC_TEXT_START}Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, slik at agenten får rask tilgang til relevant pakkedokumentasjon.{ITALIC_TEXT_STOP}",
         "",
-        "Når agenten er ferdig kan du se alle endringene med kommandoen `git diff`. Hvis du vil angre agentens endringer kan dette gjøres med `git restore .`",
+        f"{ITALIC_TEXT_START}Når agenten er ferdig kan du se alle endringene med kommandoen {GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}. Hvis du vil angre agentens endringer kan dette gjøres med {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP}",
         "",
         f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}",
         "",
