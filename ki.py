@@ -2,6 +2,7 @@
 # requires-python = ">=3.12"
 # dependencies = [
 #     "marimo-studio==0.4.0",
+#     "sandlock>=0.9.0",
 # ]
 # ///
 
@@ -16,6 +17,8 @@ import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
+
+from sandlock import Sandbox
 
 IS_DAPLA_ENVIRONMENT = "DAPLA_ENVIRONMENT" in os.environ
 MARIMO_ADDRESS = f"http://localhost:{8080 if IS_DAPLA_ENVIRONMENT else 2718}"
@@ -100,16 +103,44 @@ def main() -> None:
 
 
 
-def build_prompt(agent_session: AgentSession) -> str:
-    prompt = "# System prompt (always follow this) \n\n"
-    prompt += agent_session.system_prompt
-    prompt += f"\n\n# User prompt (respond in same language)\n\n{agent_session.initial_prompt}"
-    return prompt
+def get_provider_domain() -> str:
+    return "opencode.ai:443"
 
 
 def start_agent(agent_session: AgentSession) -> None:
-    command = ["opencode", "--prompt", build_prompt(agent_session)]
-    subprocess.run(command, cwd=agent_session.writeable_directory, check=True)
+    home = Path.home()
+    pi_writable_path = home / ".pi" / "agent"
+    marimo_servers_path = home / ".local" / "state" / "marimo" / "servers"
+    
+    sandbox = Sandbox(
+        fs_readable=[
+            str(home),
+            "/nix/store",
+            "/run",
+        ],
+        fs_writable=[
+            str(agent_session.writeable_directory),
+            str(pi_writable_path),
+            str(marimo_servers_path),
+            "/tmp",
+            "/dev/null"
+        ],
+        cwd=str(agent_session.writeable_directory),
+        net_allow=[get_provider_domain(), MARIMO_ADDRESS.removeprefix("http://")],
+    )
+    exit_code = sandbox.run_interactive(
+        [
+            "pi",
+            "--no-context-files",
+            "--tools",
+            "bash,read,edit,grep,ls",
+            "--system-prompt",
+            agent_session.system_prompt,
+            agent_session.initial_prompt,
+        ]
+    )
+    if exit_code != 0:
+        raise subprocess.CalledProcessError(exit_code, "pi")
 
 
 def get_resources() -> list[Resource]:
