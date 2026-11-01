@@ -135,8 +135,24 @@ def build_prompt(agent_session: AgentSession) -> str:
 
 
 def start_agent(agent_session: AgentSession) -> None:
+    home = Path.home()
+    xdg_data = Path(os.environ.get("XDG_DATA_HOME", home / ".local/share"))
+    xdg_cache = Path(os.environ.get("XDG_CACHE_HOME", home / ".cache"))
+    xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", home / ".config"))
+    xdg_state = Path(os.environ.get("XDG_STATE_HOME", home / ".local/state"))
+    opencode_writable_paths = [
+        xdg_data / "opencode",
+        xdg_cache / "opencode",
+        xdg_config / "opencode",
+        xdg_state / "opencode",
+        Path("/tmp/opencode"),
+        agent_session.writeable_directory,
+    ]
+    for path in opencode_writable_paths:
+        path.mkdir(parents=True, exist_ok=True)
+
     readable_paths = [
-        Path.home(),
+        home,
         Path("/bin"),
         Path("/dev"),
         Path("/etc"),
@@ -149,7 +165,7 @@ def start_agent(agent_session: AgentSession) -> None:
     ]
     sandbox = Sandbox(
         fs_readable=[str(path) for path in readable_paths if path.exists()],
-        fs_writable=[str(agent_session.writeable_directory)],
+        fs_writable=[str(path) for path in opencode_writable_paths],
         cwd=str(agent_session.writeable_directory),
         net_allow=[],
     )
