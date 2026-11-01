@@ -27,6 +27,7 @@ GREEN_TEXT_STOP = "\033[0m"
 ITALIC_TEXT_START = "\033[3m"
 ITALIC_TEXT_STOP = "\033[0m"
 
+
 @dataclass
 class Arguments:
     dry_run: bool
@@ -68,14 +69,12 @@ def main() -> None:
         f"  Notebook: {notebook_file}",
         f"  View:     {html_file}",
         "",
-        "Kilder lastet",
-        *(f"    {source.path}" for source in sources),
-        "",
         "Relvant kontekst er lastet.",
         "",
-        f"{ITALIC_TEXT_START}Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, slik at agenten får rask tilgang til relevant pakkedokumentasjon.{ITALIC_TEXT_STOP}",
+        f"{ITALIC_TEXT_START}Agenten vil få automatisk skrivetilgang til {notebook_file.parent} (uten bekreftelsesmelding). Agenten vil ikke kunne skrive til filer utenfor dette og ikke til bøtter. Agenten har ikke tilgang til eksterne internettsider, men leser lokal dokumentasjon. Det anbefales derfor å installere relevante Python-pakker i notebooken på forhånd, slik at agenten får rask tilgang til relevant pakkedokumentasjon.",
         "",
-        f"{ITALIC_TEXT_START}Når agenten er ferdig kan du se alle endringene med kommandoen {GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}. Hvis du vil angre agentens endringer kan dette gjøres med {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP}",
+        f"Når agenten er ferdig kan du se alle endringene med kommandoen {GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}.",
+        f" Hvis du vil angre agentens endringer kan dette gjøres med {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP}",
         "",
         f"{GREEN_TEXT_START}Skriv inn hva du ønsker skal gjøres og trykk deretter Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}",
         "",
@@ -95,7 +94,7 @@ def main() -> None:
 def validate_notebook_directory(notebook_file: Path) -> None:
     if notebook_file.parent.name != "dashboards":
         print(
-            "Notebook-filen må ligge i en mappe som heter \"dashboards\". "
+            'Notebook-filen må ligge i en mappe som heter "dashboards". '
             "Agenten kommer til å få automatisk skrivetilgang til filer i denne mappen (men ikke utenfor).",
             file=sys.stderr,
         )
@@ -131,9 +130,7 @@ def validate_github_repository() -> None:
 
 def build_prompt(agent_session: AgentSession) -> str:
     prompt = "# System prompt\n\n"
-    prompt += "\n".join(
-        f"{instruction}" for instruction in agent_session.system_prompt
-    )
+    prompt += "\n".join(f"{instruction}" for instruction in agent_session.system_prompt)
     prompt += f"\n\n# User prompt (respond in same language)\n\n{agent_session.initial_prompt}"
     return prompt
 
