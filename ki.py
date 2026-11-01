@@ -258,7 +258,15 @@ def run_in_marimo_session(notebook_file: Path, code: str) -> str:
 
 def get_notebook_site_packages(notebook_file: Path) -> str:
     python = subprocess.run(
-        ["uv", "python", "find", "--script", str(notebook_file)],
+        [
+            "uv",
+            "python",
+            "find",
+            "--script",
+            str(notebook_file),
+            "--no-project",
+            "--resolve-links",
+        ],
         capture_output=True,
         text=True,
         check=True,
