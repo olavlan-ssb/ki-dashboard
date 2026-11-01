@@ -61,9 +61,7 @@ def main() -> None:
     notebooks = find_active_notebooks()
     if not notebooks:
         exit_because_no_valid_marimo_session()
-    notebook_file = (
-        notebooks[0] if len(notebooks) == 1 else choose_notebook(notebooks)
-    )
+    notebook_file = notebooks[0] if len(notebooks) == 1 else choose_notebook(notebooks)
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
 
@@ -134,43 +132,45 @@ def build_prompt(agent_session: AgentSession) -> str:
     return prompt
 
 
-def start_agent(agent_session: AgentSession) -> None:
+def get_opencode_writeable_paths() -> list[Path]:
     home = Path.home()
     xdg_data = Path(os.environ.get("XDG_DATA_HOME", home / ".local/share"))
     xdg_cache = Path(os.environ.get("XDG_CACHE_HOME", home / ".cache"))
     xdg_config = Path(os.environ.get("XDG_CONFIG_HOME", home / ".config"))
     xdg_state = Path(os.environ.get("XDG_STATE_HOME", home / ".local/state"))
-    opencode_writable_paths = [
+    return [
         xdg_data / "opencode",
         xdg_cache / "opencode",
         xdg_config / "opencode",
         xdg_state / "opencode",
         Path("/tmp/opencode"),
-        agent_session.writeable_directory,
     ]
+
+
+def start_agent(agent_session: AgentSession) -> None:
+    opencode_result = subprocess.run(
+        ["which", "opencode"], capture_output=True, text=True, check=False
+    )
+    if opencode_result.returncode != 0 or not opencode_result.stdout.strip():
+        raise FileNotFoundError("Could not find opencode on PATH")
+    opencode_path = Path(opencode_result.stdout.strip()).resolve()
+
+    home = Path.home()
+    opencode_writable_paths = get_opencode_writeable_paths()
     for path in opencode_writable_paths:
         path.mkdir(parents=True, exist_ok=True)
 
-    readable_paths = [
-        home,
-        Path("/bin"),
-        Path("/dev"),
-        Path("/etc"),
-        Path("/lib"),
-        Path("/lib64"),
-        Path("/nix/store"),
-        Path("/proc"),
-        Path("/run"),
-        Path("/usr"),
-    ]
     sandbox = Sandbox(
-        fs_readable=[str(path) for path in readable_paths if path.exists()],
-        fs_writable=[str(path) for path in opencode_writable_paths],
+        fs_readable=[str(home), str(opencode_path)],
+        fs_writable=[
+            str(agent_session.writeable_directory),
+            *(str(path) for path in opencode_writable_paths),
+        ],
         cwd=str(agent_session.writeable_directory),
         net_allow=[],
     )
     exit_code = sandbox.run_interactive(
-        ["opencode", "--prompt", build_prompt(agent_session)]
+        [str(opencode_path), "--prompt", build_prompt(agent_session)]
     )
     if exit_code != 0:
         raise subprocess.CalledProcessError(exit_code, "opencode")
