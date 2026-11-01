@@ -345,4 +345,8 @@ def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print()
+        raise SystemExit(130)
