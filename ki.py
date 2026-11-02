@@ -130,10 +130,10 @@ def get_model_provider_domain() -> str:
 def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
-    python_writeable_paths = [
-        home / ".cache" / "uv",
-        agent_session.working_directory / "__pycache__",
-    ]
+    uv_cache_path = home / ".cache" / "uv"
+    pycache_path = agent_session.working_directory / "__pycache__"
+    pycache_path.mkdir(exist_ok=True)
+    python_writeable_paths = [uv_cache_path, pycache_path]
 
     sandbox = Sandbox(
         fs_readable=[
