@@ -224,16 +224,18 @@ def get_system_prompt(
     return (
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`.\n"
         f"Your only write access is to the following paths:\n{writeable_paths_text}\n"
-        f"Develop the notebook by following the marimo-notebook skill"
+        "Develop the notebook by following the marimo-notebook skill"
         "Try to keep logic in the notebook and layout/styling and static text in the HTML view.\n"
         "Always give meaningful names to cells, use only one output component per cell, and make sure the HTML view is in sync.\n"
         "Use English for code and Norwegian for user-facing output.\n"
+        'The application runs in the Dapla test environment by default; if different data or behavior is needed in production, check whether the `DAPLA_ENVIRONMENT` environment variable is `"prod"`.\n'
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "Run both static tests and runtime checks before handing off changes.\n"
         f"Make runtime checks as realistic as possible using generated mock data created with Faker and written to `{mock_data_folder}` if necessary.\n"
-        "Use `mo.app_meta().mode == \"script\"` to detect runtime testing and simulate realistic user interactions with default or synthetic inputs.\n"
+        'Use `mo.app_meta().mode == "script"` to detect runtime testing and simulate realistic user interactions with default or synthetic inputs.\n'
         "Run runtime tests with `uv run --offline --no-sync` whenever possible to reuse cached packages without network access.\n"
         "When you are done, remind the user to run the notebook again to see the changes.\n"
+        "If you add packages to the notebook metadata, explicitly tell the user to run the notebook so those packages can be installed.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "Based on your findings, use the question tool to clarify the user's requirements before implementing."
