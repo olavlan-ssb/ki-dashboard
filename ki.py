@@ -239,6 +239,7 @@ def get_system_prompt(
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "After reading relevant documentation, ask questions to clarify the user's requirements before implementing."
+        "Clarify which data files should be used; if the user wants to choose a data file, use `mo.ui.file_browser` with `\"/buckets\"` as the root folder."
     )
 
 
