@@ -238,8 +238,8 @@ def get_system_prompt(
         "If you add packages to the notebook metadata, explicitly tell the user to run the notebook so those packages can be installed.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
-        "After reading relevant documentation, ask questions to clarify the user's requirements before implementing."
-        "Clarify which data files should be used; if the user wants to choose a data file, use `mo.ui.file_browser` with `\"/buckets\"` as the root folder."
+        "After reading relevant documentation, consider asking questions to make the user's requirements more precise."
+        'Also consider clarifying which data files should be used; if the user wants to choose a data file, use `mo.ui.file_browser` with `"/buckets"` as the root folder.'
     )
 
 
