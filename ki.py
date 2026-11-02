@@ -231,6 +231,7 @@ def get_system_prompt(
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "Run both static tests and runtime checks before handing off changes.\n"
         f"Make runtime checks as realistic as possible using generated mock data created with Faker and written to `{mock_data_folder}` if necessary.\n"
+        "Use `mo.app_meta().mode == \"script\"` to detect runtime testing and simulate realistic user interactions with default or synthetic inputs.\n"
         "When you are done, remind the user to run the notebook again to see the changes.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
