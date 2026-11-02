@@ -72,7 +72,12 @@ def main() -> None:
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
     mock_data_folder = add_mock_data_folder(notebook_file.parent)
-    writeable_paths = [notebook_file, html_file, mock_data_folder, Path("/tmp")]
+    writeable_paths = [
+        notebook_file,
+        html_file,
+        mock_data_folder,
+        Path("/tmp"),
+    ]
 
     resources = get_resources()
     system_prompt = get_system_prompt(
@@ -125,7 +130,10 @@ def get_model_provider_domain() -> str:
 def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
-    uv_writeable_path = home / ".cache" / "uv"  # required for marimo check
+    python_writeable_paths = [
+        home / ".cache" / "uv",
+        agent_session.working_directory / "__pycache__",
+    ]
 
     sandbox = Sandbox(
         fs_readable=[
@@ -136,7 +144,7 @@ def start_agent(agent_session: AgentSession) -> None:
         fs_writable=[
             *(str(path) for path in agent_session.writeable_paths),
             str(pi_writable_path),
-            str(uv_writeable_path),
+            *(str(path) for path in python_writeable_paths),
             "/dev/null",
         ],
         cwd=str(agent_session.working_directory),
@@ -222,7 +230,8 @@ def get_system_prompt(
         "Use English for code and Norwegian for user-facing output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "Run both static tests and runtime checks before handing off changes.\n"
-        f"Make runtime checks as realistic as possible using generated mock data created with Faker and written to `{mock_data_folder}`.\n"
+        f"Make runtime checks as realistic as possible using generated mock data created with Faker and written to `{mock_data_folder}` if necessary.\n"
+        "When you are done, remind the user to run the notebook again to see the changes.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "Based on your findings, use the question tool to clarify the user's requirements before implementing."
