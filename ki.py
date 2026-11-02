@@ -154,7 +154,7 @@ def start_agent(agent_session: AgentSession) -> None:
         [
             "pi",
             "--model",
-            "gemini-4-argon",
+            "opencode-go/gemini-4-argon",
             "--thinking",
             "low",
             "--no-context-files",
