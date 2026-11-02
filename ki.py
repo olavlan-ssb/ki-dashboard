@@ -173,8 +173,7 @@ def get_resources() -> list[Resource]:
     notebook_python_packages: Resource = Resource(
         Path.home() / ".cache" / "uv" / "environments-v2",
         (
-            "Always read relevant API documentation here before using packages. "
-            "You must find the correct Python environment."
+            "Always find and read relevant API documentation here before using packages. "
         ),
     )
 
