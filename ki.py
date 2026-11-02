@@ -225,7 +225,7 @@ def get_system_prompt(
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`.\n"
         f"Your only write access is to the following paths:\n{writeable_paths_text}\n"
         f"Develop the notebook by following the marimo-notebook skill"
-        "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
+        "Try to keep logic in the notebook and layout/styling and static text in the HTML view.\n"
         "Always give meaningful names to cells, use only one output component per cell, and make sure the HTML view is in sync.\n"
         "Use English for code and Norwegian for user-facing output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
