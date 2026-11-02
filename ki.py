@@ -87,7 +87,7 @@ def main() -> None:
         f"\n"
         f"{ITALIC_TEXT_START}Det anbefales å installere relevante Python-pakker i notebooken på forhånd, "
         f"slik at agenten får rask tilgang til pakkedokumentasjon.\n"
-        f"Agenten vil endre notebooken gjennom kommandoer som kan være vanskelige å lese.\n"
+        f"Agenten vil ha skrivetilgang til notebook-filen og HTML-filen.\n"
         f"Når agenten er ferdig, kan du se alle endringene med kommandoen "
         f"{GREEN_TEXT_START}git diff{GREEN_TEXT_STOP}.\n"
         f"Kommandoen {GREEN_TEXT_START}git restore .{GREEN_TEXT_STOP}{ITALIC_TEXT_STOP} "
@@ -343,8 +343,8 @@ def validate_github_repository() -> None:
     ).stdout
     if status:
         print(
-            "Repoet har endringer som ikke er committet. Disse må committes før agenten kan starte.\n"
-            "Agenten vil endre notebooken gjennom kommandoer som kan være vanskelige å lese.\n"
+            "Repoet har endringer som ikke er committet – disse må committes før agenten kan starte.\n"
+            "Agenten vil ha skrivetilgang til notebook-filen og HTML-filen.\n"
             "Derfor må prosjektets nåværende tilstand kunne gjenopprettes.\n",
             file=sys.stderr,
         )
