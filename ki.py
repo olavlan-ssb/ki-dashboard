@@ -118,14 +118,13 @@ def add_mock_data_folder(at_path: Path) -> Path:
     return mock_data_folder
 
 
-def get_provider_domain() -> str:
+def get_model_provider_domain() -> str:
     return "opencode.ai"
 
 
 def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
-    marimo_writeable_path = home / ".local" / "state" / "marimo" / "servers"
     uv_writeable_path = home / ".cache" / "uv"  # required for marimo check
 
     sandbox = Sandbox(
@@ -137,12 +136,11 @@ def start_agent(agent_session: AgentSession) -> None:
         fs_writable=[
             *(str(path) for path in agent_session.writeable_paths),
             str(pi_writable_path),
-            str(marimo_writeable_path),
             str(uv_writeable_path),
             "/dev/null",
         ],
         cwd=str(agent_session.working_directory),
-        net_allow=[get_provider_domain()],
+        net_allow=[get_model_provider_domain()],
     )
     exit_code = sandbox.run_interactive(
         [
