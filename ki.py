@@ -72,10 +72,11 @@ def main() -> None:
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
     mock_data_folder = add_mock_data_folder(notebook_file.parent)
+    writeable_paths = [notebook_file, html_file, mock_data_folder, Path("/tmp")]
 
     resources = get_resources()
     system_prompt = get_system_prompt(
-        resources, notebook_file, html_file, mock_data_folder
+        resources, notebook_file, html_file, mock_data_folder, writeable_paths
     )
     print(
         f"\nAktive Marimo-filer\n"
@@ -101,7 +102,7 @@ def main() -> None:
         resources,
         system_prompt,
         initial_prompt,
-        [notebook_file, html_file, mock_data_folder],
+        writeable_paths,
         notebook_file.parent,
     )
     if arguments.dry_run:
@@ -125,6 +126,7 @@ def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
     marimo_writeable_path = home / ".local" / "state" / "marimo" / "servers"
+    uv_writeable_path = home / ".cache" / "uv"  # required for marimo check
 
     sandbox = Sandbox(
         fs_readable=[
@@ -136,7 +138,7 @@ def start_agent(agent_session: AgentSession) -> None:
             *(str(path) for path in agent_session.writeable_paths),
             str(pi_writable_path),
             str(marimo_writeable_path),
-            "/tmp",
+            str(uv_writeable_path),
             "/dev/null",
         ],
         cwd=str(agent_session.working_directory),
@@ -207,13 +209,15 @@ def get_system_prompt(
     notebook_file: Path,
     html_file: Path,
     mock_data_folder: Path,
+    writeable_paths: list[Path],
 ) -> str:
     resources_text = "\n".join(
         f"  - {resource.path}: {resource.usage}" for resource in resources
     )
+    writeable_paths_text = "\n".join(f"  - {path}" for path in writeable_paths)
     return (
         f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`.\n"
-        f"Your only write access is to `{notebook_file}`, `{html_file}`, and `{mock_data_folder}`.\n"
+        f"Your only write access is to the following paths:\n{writeable_paths_text}\n"
         f"Develop the notebook by following the marimo-notebook skill"
         "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
         "Always give meaningful names to cells and make sure the HTML view is in sync.\n"
