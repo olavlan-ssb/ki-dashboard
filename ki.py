@@ -11,6 +11,7 @@ import asyncio
 import curses
 import json
 import os
+import pprint
 import subprocess
 import sys
 import urllib.request
@@ -94,6 +95,7 @@ def main() -> None:
         f"{GREEN_TEXT_START}Skriv inn hva du ønsker å få gjort, og trykk Enter for å starte agenten (eller Ctrl+C for å avbryte).{GREEN_TEXT_STOP}\n"
     )
 
+    sys.stdin.reconfigure(encoding="utf-8", errors="replace")
     initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
     agent_session = AgentSession(
         resources,
@@ -103,7 +105,7 @@ def main() -> None:
         notebook_file.parent,
     )
     if arguments.dry_run:
-        print(agent_session)
+        print(pprint.pformat(agent_session, sort_dicts=False, width=100))
     else:
         start_agent(agent_session)
 
