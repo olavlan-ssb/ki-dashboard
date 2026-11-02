@@ -226,7 +226,7 @@ def get_system_prompt(
         f"Your only write access is to the following paths:\n{writeable_paths_text}\n"
         f"Develop the notebook by following the marimo-notebook skill"
         "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
-        "Always give meaningful names to cells and make sure the HTML view is in sync.\n"
+        "Always give meaningful names to cells, use only one output component per cell, and make sure the HTML view is in sync.\n"
         "Use English for code and Norwegian for user-facing output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "Run both static tests and runtime checks before handing off changes.\n"
