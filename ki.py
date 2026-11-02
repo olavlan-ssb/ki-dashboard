@@ -52,7 +52,8 @@ class AgentSession:
     resources: list[Resource]
     system_prompt: str
     initial_prompt: str
-    writeable_directory: Path
+    writeable_paths: list[Path]
+    working_directory: Path
 
 
 def main() -> None:
@@ -92,15 +93,16 @@ def main() -> None:
 
     initial_prompt = input(f"{GREEN_TEXT_START}> {GREEN_TEXT_STOP}")
     agent_session = AgentSession(
-        resources, system_prompt, initial_prompt, notebook_file.parent
+        resources,
+        system_prompt,
+        initial_prompt,
+        [notebook_file, html_file],
+        notebook_file.parent,
     )
     if arguments.dry_run:
-        print(build_prompt(agent_session))
+        print(agent_session)
     else:
         start_agent(agent_session)
-
-
-
 
 
 def get_provider_domain() -> str:
@@ -111,7 +113,7 @@ def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
     marimo_servers_path = home / ".local" / "state" / "marimo" / "servers"
-    
+
     sandbox = Sandbox(
         fs_readable=[
             str(home),
@@ -119,13 +121,13 @@ def start_agent(agent_session: AgentSession) -> None:
             "/run",
         ],
         fs_writable=[
-            str(agent_session.writeable_directory),
+            *(str(path) for path in agent_session.writeable_paths),
             str(pi_writable_path),
             str(marimo_servers_path),
             "/tmp",
-            "/dev/null"
+            "/dev/null",
         ],
-        cwd=str(agent_session.writeable_directory),
+        cwd=str(agent_session.working_directory),
         net_allow=[get_provider_domain(), MARIMO_ADDRESS.removeprefix("http://")],
     )
     exit_code = sandbox.run_interactive(
@@ -171,21 +173,11 @@ def get_resources() -> list[Resource]:
         ),
     )
 
-    marimo_pair: Resource = Resource(
-        Path.home() / ".agents" / "skills" / "marimo-pair",
-        (
-            "Use this skill to develop the notebook, instead of making direct edits to the file. "
-            f"It is not necessary to discover Marimo servers; the Marimo server is available at {MARIMO_ADDRESS}. "
-            "You must give the user a short explanation before each time you use the marimo-pair script."
-        ),
-    )
-
     marimo_notebook: Resource = Resource(
         Path.home() / ".agents" / "skills" / "marimo-notebook",
         (
-            "Use this skill instead of marimo-pair when you only need to make minor changes,"
-            "that can be made through direct edits to the notebook. "
-            "Also use this skill to understand how Marimo outputs work. "
+            "Always start by reading this skill to understand how to develop Marimo notebooks. "
+            "Pay special attention to how Marimo outputs work. "
             "Summary: always put the output in a variable and use that as the last expression of the cell."
         ),
     )
@@ -194,7 +186,6 @@ def get_resources() -> list[Resource]:
         notebook_python_packages,
         dapla_manual,
         designsystemet,
-        marimo_pair,
         marimo_notebook,
     ]
 
@@ -210,8 +201,6 @@ def get_system_prompt(
         f"and its Marimo Studio HTML view `{html_file}`. You should not edit other files.\n"
         "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
         "Always give meaningful names to cells and make sure the html view is in sync.\n"
-        "Use marimo-pair when developing the notebook, and inspect for errors before you finish.\n"
-        "You must *not* test by changing the user's real data.\n"
         "Use English for code and Norwegian for user-facing output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
@@ -314,6 +303,7 @@ def get_ssb_style_block() -> str:
 }
 </style>"""
 
+
 def validate_github_repository() -> None:
     try:
         repository = subprocess.run(
@@ -340,6 +330,7 @@ def validate_github_repository() -> None:
             file=sys.stderr,
         )
         raise SystemExit(1)
+
 
 def fetch_github_docs(repo_name: str, docs_path: str) -> Path:
     destination = Path.home() / ".cache" / repo_name
