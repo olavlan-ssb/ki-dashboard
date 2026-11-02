@@ -153,6 +153,10 @@ def start_agent(agent_session: AgentSession) -> None:
     exit_code = sandbox.run_interactive(
         [
             "pi",
+            "--model",
+            "gemini-4-argon",
+            "--thinking",
+            "low",
             "--no-context-files",
             "--tools",
             "bash,read,edit,grep,ls",
@@ -222,24 +226,23 @@ def get_system_prompt(
     )
     writeable_paths_text = "\n".join(f"  - {path}" for path in writeable_paths)
     return (
-        f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`.\n"
+        f"Your job is to help develop the sandboxed Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`.\n"
         f"Your only write access is to the following paths:\n{writeable_paths_text}\n"
-        "Develop the notebook by following the marimo-notebook skill"
+        "Develop the notebook by following the marimo-notebook skill.\n"
         "Try to keep logic in the notebook and layout/styling and static text in the HTML view.\n"
-        "Always give meaningful names to cells, use only one output component per cell, and make sure the HTML view is in sync.\n"
+        "Always give meaningful names to cells, use only one output component per cell, and make sure the HTML view is in sync after making edits to the notebook.\n"
+        "Avoid implementing large amounts of logic and data processing - prefer a thin interaction layer over existing SSB packages.\n"
         "Use English for code and Norwegian for user-facing output.\n"
         'The application runs in the Dapla test environment by default; if different data or behavior is needed in production, check whether the `DAPLA_ENVIRONMENT` environment variable is `"prod"`.\n'
-        "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
         "Run both static tests and runtime checks before handing off changes.\n"
         f"Make runtime checks as realistic as possible using generated mock data created with Faker and written to `{mock_data_folder}` if necessary.\n"
         'Use `mo.app_meta().mode == "script"` to detect runtime testing and simulate realistic user interactions with default or synthetic inputs.\n'
         "Run runtime tests with `uv run --offline` whenever possible to reuse cached packages without network access.\n"
-        "When you are done, remind the user to run the notebook again to see the changes.\n"
-        "If you add packages to the notebook metadata, explicitly tell the user to run the notebook so those packages can be installed.\n"
+        "When you are done, remind the user to run the notebook again to see the changes - this also needs to be done to install new packages added to the notebook metadata.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
         "After reading relevant documentation, consider asking questions to make the user's requirements more precise."
-        'Also consider clarifying which data files should be used; if the user wants to choose a data file, use `mo.ui.file_browser` with `"/buckets"` as the root folder.'
+        'Consider clarifying which data files should be used; if the user wants to choose a data file, use `mo.ui.file_browser` with `"/buckets"` as the root folder.'
     )
 
 
