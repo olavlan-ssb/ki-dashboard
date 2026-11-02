@@ -70,9 +70,12 @@ def main() -> None:
     )
     view = get_view(notebook_file)
     html_file = view.joinpath("index.html")
+    mock_data_folder = add_mock_data_folder(notebook_file.parent)
 
     resources = get_resources()
-    system_prompt = get_system_prompt(resources, notebook_file, html_file)
+    system_prompt = get_system_prompt(
+        resources, notebook_file, html_file, mock_data_folder
+    )
     print(
         f"\nAktive Marimo-filer\n"
         f"  Notebook: {notebook_file}\n"
@@ -96,13 +99,20 @@ def main() -> None:
         resources,
         system_prompt,
         initial_prompt,
-        [notebook_file, html_file],
+        [notebook_file, html_file, mock_data_folder],
         notebook_file.parent,
     )
     if arguments.dry_run:
         print(agent_session)
     else:
         start_agent(agent_session)
+
+
+def add_mock_data_folder(at_path: Path) -> Path:
+    mock_data_folder = at_path / "mock_data"
+    mock_data_folder.mkdir(exist_ok=True)
+    (mock_data_folder / ".gitignore").write_text("*\n!.gitignore\n")
+    return mock_data_folder
 
 
 def get_provider_domain() -> str:
@@ -112,7 +122,7 @@ def get_provider_domain() -> str:
 def start_agent(agent_session: AgentSession) -> None:
     home = Path.home()
     pi_writable_path = home / ".pi" / "agent"
-    marimo_servers_path = home / ".local" / "state" / "marimo" / "servers"
+    marimo_writeable_path = home / ".local" / "state" / "marimo" / "servers"
 
     sandbox = Sandbox(
         fs_readable=[
@@ -123,12 +133,12 @@ def start_agent(agent_session: AgentSession) -> None:
         fs_writable=[
             *(str(path) for path in agent_session.writeable_paths),
             str(pi_writable_path),
-            str(marimo_servers_path),
+            str(marimo_writeable_path),
             "/tmp",
             "/dev/null",
         ],
         cwd=str(agent_session.working_directory),
-        net_allow=[get_provider_domain(), MARIMO_ADDRESS.removeprefix("http://")],
+        net_allow=[get_provider_domain()],
     )
     exit_code = sandbox.run_interactive(
         [
@@ -191,21 +201,26 @@ def get_resources() -> list[Resource]:
 
 
 def get_system_prompt(
-    resources: list[Resource], notebook_file: Path, html_file: Path
+    resources: list[Resource],
+    notebook_file: Path,
+    html_file: Path,
+    mock_data_folder: Path,
 ) -> str:
     resources_text = "\n".join(
         f"  - {resource.path}: {resource.usage}" for resource in resources
     )
     return (
-        f"Your job is to help develop the reactive Marimo application `{notebook_file}` "
-        f"and its Marimo Studio HTML view `{html_file}`. You should not edit other files.\n"
+        f"Your job is to help develop the reactive Marimo application `{notebook_file}` and its Marimo Studio HTML view `{html_file}`.\n"
+        f"Your only write access is to `{notebook_file}`, `{html_file}`, and `{mock_data_folder}`.\n"
+        f"Develop the notebook by following the marimo-notebook skill"
         "Try to keep logic in the notebook and layout/styling in the HTML view.\n"
-        "Always give meaningful names to cells and make sure the html view is in sync.\n"
+        "Always give meaningful names to cells and make sure the HTML view is in sync.\n"
         "Use English for code and Norwegian for user-facing output.\n"
         "Avoid implementing large amounts of logic and data processing; prefer a thin interaction layer over existing SSB packages.\n"
+        "Run both static tests and runtime checks before handing off changes.\n"
+        f"Make runtime checks as realistic as possible using generated mock data created with Faker and written to `{mock_data_folder}`.\n"
         "The following resources are available, with instructions for when and how to use them.\n"
         f"{resources_text}\n"
-        "Do not use the shell tool to read them; only use the grep, glob and read tools.\n"
         "Based on your findings, use the question tool to clarify the user's requirements before implementing."
     )
 
