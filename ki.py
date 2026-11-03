@@ -69,8 +69,8 @@ def main() -> None:
         if len(notebooks) == 1
         else choose_notebook(notebooks)
     )
-    view = get_view(notebook_file)
-    html_file = view.joinpath("index.html")
+    view_folder = get_view_folder(notebook_file)
+    html_file = view_folder.joinpath("index.html")
     mock_data_folder = add_mock_data_folder(notebook_file.parent)
     writeable_paths = [
         notebook_file,
@@ -275,11 +275,11 @@ def find_notebooks() -> list[Path]:
     return notebooks
 
 
-def get_view(notebook_file: Path) -> Path:
-    return asyncio.run(_get_view(notebook_file))
+def get_view_folder(notebook_file: Path) -> Path:
+    return asyncio.run(_get_view_folder(notebook_file))
 
 
-async def _get_view(notebook_file: Path) -> Path:
+async def _get_view_folder(notebook_file: Path) -> Path:
     from marimo_studio.authoring import open_workspace
 
     workspace = open_workspace(notebook_file)
@@ -289,10 +289,7 @@ async def _get_view(notebook_file: Path) -> Path:
         overview.default_view is not None
         and (overview.view_root / overview.default_view).is_dir()
     ):
-        view = workspace.view(overview.default_view)
-        inspection = await view.inspect()
-        if inspection.provider == "marimo-studio/vanilla":
-            return Path(inspection.root)
+        return overview.view_root / overview.default_view
 
     name = "dashboard"
     print("Oppretter nytt view...")
@@ -310,6 +307,7 @@ async def _get_view(notebook_file: Path) -> Path:
             1,
         )
         await view.write("index.html", content, expected_revision=document.revision)
+
     await view.build()
     print("Et nytt view 'dashboard.html' er opprettet. Oppdater siden for å se viewet.")
     return Path((await view.inspect()).root)
