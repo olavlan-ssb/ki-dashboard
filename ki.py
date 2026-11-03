@@ -153,8 +153,6 @@ def start_agent(agent_session: AgentSession) -> None:
     exit_code = sandbox.run_interactive(
         [
             "pi",
-            "--model",
-            "opencode-go/gemini-4-argon",
             "--thinking",
             "low",
             "--no-context-files",
