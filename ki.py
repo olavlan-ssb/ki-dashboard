@@ -61,7 +61,7 @@ def main() -> None:
     arguments = parse_args()
     if not arguments.dry_run:
         validate_github_repository()
-    notebooks = find_active_notebooks()
+    notebooks = find_notebooks()
     notebook_file = (
         exit_because_no_valid_marimo_session()
         if not notebooks
@@ -252,7 +252,7 @@ def exit_because_no_valid_marimo_session() -> NoReturn:
     raise SystemExit(1)
 
 
-def find_active_notebooks() -> list[Path]:
+def find_notebooks() -> list[Path]:
     try:
         with urllib.request.urlopen(
             f"{MARIMO_ADDRESS}/api/sessions", timeout=2
@@ -270,7 +270,7 @@ def find_active_notebooks() -> list[Path]:
         if isinstance(session, dict)
         and isinstance(session.get("path"), str)
         and Path(session["path"]).is_file()
-        and Path(session["path"]).parent.name == "dashboards"
+        and "dashboards" in Path(session["path"]).parts
     ]
     return notebooks
 
